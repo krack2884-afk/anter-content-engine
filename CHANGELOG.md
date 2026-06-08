@@ -1,3 +1,16 @@
+## [2026-06-08 22:55 PT] — Dark Motivation Alert
+
+**Video:** The System Wants You Weak - Joker Motivation 2026  
+**Channel:** Dark Truth Media  
+**Script Generated:** ✅ They Want You Weak Reaction  
+**Status:** Ready for posting  
+
+- Full Tyler-voice script with music cues
+- SEO tags optimized for reach
+- GitHub: ✅ | Drive: ⚠️ (folder update needed)
+
+---
+
 # ANTER Content Changelog
 
 Auto-updated every time a new video is found or a script is generated.
