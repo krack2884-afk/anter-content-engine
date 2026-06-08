@@ -7,13 +7,10 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#000; color:#fff; font-family:'Georgia',serif; overflow:hidden; }
-
 #controls {
   position:fixed; top:0; left:0; right:0;
-  background:rgba(0,0,0,0.95);
-  border-bottom:2px solid #c0392b;
-  padding:10px 20px;
-  display:flex; align-items:center; gap:14px;
+  background:rgba(0,0,0,0.95); border-bottom:2px solid #c0392b;
+  padding:10px 20px; display:flex; align-items:center; gap:14px;
   z-index:200; flex-wrap:wrap;
 }
 #controls button {
@@ -25,7 +22,6 @@ body { background:#000; color:#fff; font-family:'Georgia',serif; overflow:hidden
 #controls button.blue { background:#2980b9; }
 label { color:#aaa; font-size:12px; }
 input[type=range] { accent-color:#c0392b; cursor:pointer; }
-
 #script-selector {
   position:fixed; top:56px; left:0; right:0;
   background:#111; border-bottom:1px solid #333;
@@ -35,563 +31,719 @@ input[type=range] { accent-color:#c0392b; cursor:pointer; }
 .script-btn {
   background:#1a1a1a; border:1px solid #333; color:#ccc;
   padding:6px 14px; border-radius:20px; cursor:pointer;
-  font-size:12px; white-space:nowrap;
+  font-size:11px; white-space:nowrap;
 }
 .script-btn.active { background:#c0392b; border-color:#c0392b; color:#fff; }
-
 #title-bar {
   position:fixed; top:98px; left:0; right:0;
   background:linear-gradient(90deg,#c0392b,#8e1a0e);
   text-align:center; padding:7px;
-  font-size:12px; font-weight:bold; letter-spacing:3px;
+  font-size:11px; font-weight:bold; letter-spacing:2px;
   text-transform:uppercase; z-index:198;
 }
-
 #teleprompter {
   position:fixed; top:130px; bottom:0; left:0; right:0;
   overflow-y:auto;
 }
 #scroll-content {
-  padding:60px 12% 70vh;
+  padding:60px 10% 70vh;
   font-size:36px; line-height:2.0;
 }
-
-.music-cue { display:block; color:#e74c3c; font-size:17px; font-style:italic;
-  letter-spacing:2px; text-transform:uppercase; margin:28px 0 8px;
-  border-left:4px solid #c0392b; padding-left:14px; }
-.section-marker { display:block; color:#f39c12; font-size:14px; font-weight:bold;
-  letter-spacing:4px; text-transform:uppercase; margin:36px 0 6px; opacity:0.7; }
-.pause-cue { display:block; color:#3498db; font-size:16px; font-style:italic;
-  margin:8px 0; letter-spacing:1px; }
-.breath { display:block; height:30px; }
-.em { color:#e74c3c; font-weight:bold; }
-.url-cue { display:block; color:#8e44ad; font-size:14px; margin:6px 0; }
-.seo-block { display:block; color:#555; font-size:13px; margin:8px 0; }
-.divider { display:block; border-top:2px solid #222; margin:50px 0 40px; }
-
 #fade-top, #fade-bottom {
   position:fixed; left:0; right:0; pointer-events:none; z-index:197;
 }
 #fade-top { top:130px; height:80px; background:linear-gradient(to bottom,#000,transparent); }
 #fade-bottom { bottom:0; height:100px; background:linear-gradient(to top,#000,transparent); }
 #crosshair { position:fixed; top:50%; left:0; right:0; height:2px;
-  background:rgba(192,57,43,0.2); z-index:196; pointer-events:none; }
+  background:rgba(192,57,43,0.15); z-index:196; pointer-events:none; }
 #progress-bar { position:fixed; bottom:0; left:0; height:3px;
-  background:#c0392b; z-index:300; width:0%; }
+  background:#c0392b; z-index:300; width:0%; transition:width 0.1s; }
 </style>
 </head>
 <body>
-
 <div id="controls">
   <button id="playBtn" onclick="togglePlay()">&#9654; PLAY</button>
   <button onclick="resetScroll()">&#8635; RESET</button>
   <button onclick="prevScript()" class="blue">&#9664; PREV</button>
   <button onclick="nextScript()" class="blue">NEXT &#9654;</button>
-  <label>Speed:&nbsp;<input type="range" id="speedSlider" min="0.2" max="6" step="0.1" value="1.3" oninput="updateSpeed(this.value)"><span id="speedVal"> 1.3</span></label>
-  <label>Size:&nbsp;<input type="range" id="fontSlider" min="18" max="80" step="2" value="36" oninput="updateFont(this.value)"><span id="fontVal"> 36px</span></label>
+  <label>Speed&nbsp;<input type="range" id="speedSlider" min="0.2" max="6" step="0.1" value="1.3" oninput="setSpeed(this.value)"><span id="speedVal">1.3</span></label>
+  <label>Size&nbsp;<input type="range" id="fontSlider" min="18" max="80" step="2" value="36" oninput="setFont(this.value)"><span id="fontVal">36px</span></label>
   <button onclick="toggleMirror()" id="mirrorBtn">&#8596; MIRROR</button>
   <button onclick="toggleBright()" id="brightBtn">&#9728; BRIGHT</button>
 </div>
-
 <div id="script-selector">
-  <button class="script-btn active" onclick="showScript(0)">1 &middot; THEY ALWAYS KNEW</button>
-  <button class="script-btn" onclick="showScript(1)">2 &middot; I BECAME SILENCE</button>
-  <button class="script-btn" onclick="showScript(2)">3 &middot; WE ARE THE VESSEL</button>
-  <button class="script-btn" onclick="showScript(3)">4 &middot; I SAW THE TRAP</button>
-  <button class="script-btn" onclick="showScript(4)">5 &middot; WE DON'T BREAK</button>
-  <button class="script-btn" onclick="showScript(5)">6 &middot; I AM THE SOFT SPOT</button>
-  <button class="script-btn" onclick="showScript(6)">7 &middot; GOD IS DOING THE IMPOSSIBLE</button>
+  <button class="script-btn active" onclick="showScript(0)">1 &middot; THEY SENT HER</button>
+  <button class="script-btn" onclick="showScript(1)">2 &middot; THEY BRAINWASHED THEM</button>
+  <button class="script-btn" onclick="showScript(2)">3 &middot; I DO NOT CONSENT</button>
+  <button class="script-btn" onclick="showScript(3)">4 &middot; BEHIND THE SCENES</button>
+  <button class="script-btn" onclick="showScript(4)">5 &middot; PATIENCE AT WAR</button>
+  <button class="script-btn" onclick="showScript(5)">6 &middot; HOOKED ON THE FLESH</button>
+  <button class="script-btn" onclick="showScript(6)">7 &middot; WE ARE AWAKE</button>
 </div>
-
-<div id="title-bar">&#127916; SCRIPT 1 &mdash; THEY ALWAYS KNEW &nbsp;|&nbsp; ANTER</div>
-
-<div id="teleprompter">
-  <div id="scroll-content"></div>
-</div>
-
+<div id="title-bar">&#127916; ANTER TELEPROMPTER</div>
+<div id="teleprompter"><div id="scroll-content"></div></div>
 <div id="fade-top"></div>
 <div id="fade-bottom"></div>
 <div id="crosshair"></div>
 <div id="progress-bar"></div>
-
 <script>
 var scripts = [
-
 {
-  title: "SCRIPT 1 \u2014 THEY ALWAYS KNEW",
-  suggested: "They Always Knew I Was Different \u2014 I\u2019m Just Now Agreeing With Them | Dark Motivation 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Dark ambient drone \u2014 no lyrics, low bass, building tension",
-  seo: "SEO: joker motivation, dark motivation 2026, chosen one, spiritual warfare, vessel of god, empath, sigma male",
+  title: 'SCRIPT 1 — THEY SENT HER TO DESTROY ME',
+  suggested: 'I Watched the Video. Then I Looked At My Life. They Actually Sent Her. | Dark Motivation 2026',
+  music: '\ud83c\udfb5 MUSIC IN: Heavy dark ambient drone — tension, no melody, pure weight',
+  seo: 'SEO: twin flame destroyer, joker motivation, dark motivation 2026, empath awakening, mk ultra, they sent her, targeted individual, spiritual warfare',
   body: [
-    {t:"section", v:"— COLD OPEN —"},
-    {t:"line", v:"I walk into a room."},
-    {t:"line", v:"And I feel it before anyone speaks."},
+    {t:"section",v:'— COLD OPEN —'},
+    {t:"line",v:'I was watching a video.'},
+    {t:"line",v:'Joker motivation. Dark truth.'},
+    {t:"line",v:'The kind of content most people scroll past'},
+    {t:"line",v:'because it hits too close.'},
     {t:"breath"},
-    {t:"line", v:"Something shifts."},
-    {t:"line", v:"People rearrange themselves around me"},
-    {t:"line", v:"without even knowing why they're doing it."},
+    {t:"line",v:'And the topic was this:'},
     {t:"breath"},
-    {t:"pause", v:"[Look straight into camera. Let the silence breathe 3 seconds.]"},
+    {t:"em",v:'They send in a twin flame to destroy you.'},
     {t:"breath"},
-    {t:"line", v:"That's not paranoia."},
-    {t:"em", v:"That's my anointing."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Low percussion entering. Heartbeat pulse."},
-    {t:"section", v:"— THE WEIGHT I CARRY —"},
-    {t:"line", v:"Most people go through life trying to be seen."},
+    {t:"pause",v:'[Hold. Let that land on the camera. On yourself. On them.]'},
     {t:"breath"},
-    {t:"line", v:"I've spent mine carrying what most people can't even see."},
+    {t:"line",v:'Someone who arrives like an answer to a prayer.'},
+    {t:"line",v:'Perfect timing. Perfect energy. Perfect fit.'},
+    {t:"line",v:'Everything you asked God for.'},
     {t:"breath"},
-    {t:"line", v:"The weight of feeling everything."},
-    {t:"line", v:"The exhaustion of walking into darkness"},
-    {t:"line", v:"and choosing \u2014 every single time \u2014 to be the light."},
+    {t:"line",v:'For one month — pure light.'},
+    {t:"line",v:'For one month — she was everything.'},
     {t:"breath"},
-    {t:"line", v:"Nobody warned me it would cost this much."},
-    {t:"line", v:"Nobody told me that being a vessel"},
-    {t:"line", v:"means sometimes the vessel gets cracked."},
+    {t:"line",v:'And then.'},
     {t:"breath"},
-    {t:"line", v:"But here's what I know now \u2014"},
-    {t:"em", v:"light doesn't come FROM me."},
-    {t:"em", v:"It comes THROUGH me."},
-    {t:"line", v:"And the cracks are how it gets out."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC SHIFT: Single haunting organ note."},
-    {t:"section", v:"— THE MISSION —"},
-    {t:"line", v:"I'm not here to make you feel comfortable."},
+    {t:"em",v:'They activated her.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Bass pulse enters. Like a heartbeat that knows something is wrong.'},
+    {t:"section",v:'— WHO I AM —'},
+    {t:"line",v:'Let me tell you who I am first.'},
+    {t:"line",v:'Because this story only makes sense'},
+    {t:"line",v:"if you understand what I'm carrying."},
     {t:"breath"},
-    {t:"line", v:"I'm here because darkness is real."},
-    {t:"line", v:"The war for the souls of people I love"},
-    {t:"line", v:"is happening right now."},
+    {t:"line",v:'I am an empath.'},
+    {t:"line",v:'Not the social media kind.'},
+    {t:"line",v:'Not the aesthetic.'},
     {t:"breath"},
-    {t:"line", v:"And most people are losing"},
-    {t:"line", v:"because they don't even know there's a war."},
+    {t:"line",v:'I mean I feel what other people carry'},
+    {t:"line",v:'before they say a word.'},
+    {t:"line",v:'I walk into a room and I absorb the temperature of every soul in it.'},
+    {t:"line",v:"I feel the pain people haven't admitted yet."},
+    {t:"line",v:"The fear they're performing strength over."},
+    {t:"line",v:"The wound that's driving the behavior."},
     {t:"breath"},
-    {t:"pause", v:"[Point slowly at camera. Steady. Intentional.]"},
+    {t:"em",v:'I feel all of it.'},
     {t:"breath"},
-    {t:"line", v:"But I know."},
-    {t:"line", v:"I've always known."},
+    {t:"line",v:'And that is exactly why I was chosen as a target.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Low strings. Dark and slow. Like something being revealed.'},
+    {t:"section",v:'— THE WEAPON THEY SENT —'},
+    {t:"line",v:'She came in like a miracle.'},
+    {t:"line",v:'And I have shown her'},
+    {t:"line",v:'more patience than most men have in their entire lifetime.'},
     {t:"breath"},
-    {t:"line", v:"That's why they come at me harder."},
-    {t:"line", v:"That's why the opposition in my life isn't random \u2014"},
-    {t:"em", v:"it's targeted."},
-    {t:"line", v:"Because the enemy knew what God put in me"},
-    {t:"line", v:"before I did."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PEAK: Full dark orchestral swell. Let it breathe 3 seconds."},
-    {t:"section", v:"— THEY ALWAYS KNEW —"},
-    {t:"line", v:"Every person who ever tried to dim me."},
-    {t:"line", v:"Every relationship that drained me."},
-    {t:"line", v:"Every room that went quiet when I walked in."},
+    {t:"line",v:'I have loved her unconditionally.'},
+    {t:"line",v:'I have forgiven things'},
+    {t:"line",v:'that would have broken anyone else.'},
     {t:"breath"},
-    {t:"line", v:"They weren't reacting to who I was."},
-    {t:"em", v:"They were reacting to what was coming through me."},
+    {t:"line",v:'Because I saw what was behind the behavior.'},
+    {t:"line",v:'I saw the person God put in her'},
+    {t:"line",v:'before the world got to her.'},
+    {t:"line",v:'Before they activated her.'},
     {t:"breath"},
-    {t:"pause", v:"[Hold. Let this land. Do not rush.]"},
+    {t:"em",v:'But I have had enough.'},
     {t:"breath"},
-    {t:"line", v:"Darkness always recognizes light first."},
-    {t:"line", v:"Before I even speak."},
-    {t:"line", v:"Something in the room already knows"},
-    {t:"em", v:"I am not one of them."},
+    {t:"pause",v:'[Direct. Calm. Not rage — resolution.]'},
     {t:"breath"},
-    {t:"line", v:"And that terrifies them."},
-    {t:"line", v:"Because they can't control what they can't understand."},
-    {t:"em", v:"And they will NEVER understand me."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PULL BACK: Single piano. Intimate. Vulnerable."},
-    {t:"section", v:"— THE LOVE WE CHOSE —"},
-    {t:"line", v:"And then there's love."},
+    {t:"line",v:'Not enough of her.'},
+    {t:"line",v:'Enough of THEM.'},
     {t:"breath"},
-    {t:"line", v:"The kind Angela and I have."},
-    {t:"line", v:"The kind that doesn't make sense from the outside."},
-    {t:"line", v:"The kind I stay in when everyone else says leave."},
+    {t:"line",v:'The ones who used her as a weapon.'},
+    {t:"line",v:'The ones who take the people I love —'},
+    {t:"line",v:'the ones I call family —'},
+    {t:"line",v:'and manipulate them into darkness.'},
+    {t:"line",v:'Into opposing everything I try to share.'},
+    {t:"line",v:'Into becoming obstacles on my mission.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Full orchestral dark swell. Let it breathe 4 seconds.'},
+    {t:"section",v:'— WHAT THEY ARE DOING —'},
+    {t:"line",v:"And here's what I need you to understand."},
     {t:"breath"},
-    {t:"line", v:"That kind of love isn't weakness."},
-    {t:"em", v:"It's the most dangerous force on earth."},
+    {t:"line",v:'This is not personal drama.'},
+    {t:"line",v:'This is not relationship problems.'},
+    {t:"em",v:'This is a system.'},
     {t:"breath"},
-    {t:"line", v:"Because it doesn't fight back."},
-    {t:"line", v:"It just stays. Rooted. Unmovable. Chosen."},
+    {t:"line",v:'They keep us weak.'},
+    {t:"line",v:'They keep us preoccupied.'},
+    {t:"line",v:'Distracted by everything except'},
+    {t:"line",v:'what they are doing behind the scenes.'},
     {t:"breath"},
-    {t:"line", v:"And eventually \u2014"},
-    {t:"line", v:"even the most defended soul"},
-    {t:"line", v:"lowers its weapons"},
-    {t:"line", v:"in the presence of something that refuses to leave."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC RETURN: Dark bass. Triumphant undertone rising."},
-    {t:"section", v:"— THE CALL —"},
-    {t:"line", v:"So if you're watching this"},
-    {t:"line", v:"and you feel like you're carrying too much \u2014"},
+    {t:"line",v:'While we argue.'},
+    {t:"line",v:'While we chase.'},
+    {t:"line",v:'While we consume content designed to numb us.'},
     {t:"breath"},
-    {t:"em", v:"Good."},
+    {t:"line",v:'They are passing laws.'},
+    {t:"line",v:'They are signing bills.'},
+    {t:"line",v:'And in the small print —'},
+    {t:"em",v:'the small print nobody reads —'},
+    {t:"line",v:'are the permissions.'},
     {t:"breath"},
-    {t:"pause", v:"[One word. Let it land. Do not rush past it.]"},
+    {t:"line",v:'The permission to experiment on the public without consent.'},
+    {t:"line",v:'That law was passed over twenty years ago.'},
+    {t:"line",v:'Look it up. MK Ultra. Research it yourself.'},
     {t:"breath"},
-    {t:"line", v:"That weight is the shape of your calling."},
-    {t:"line", v:"The burden is the blueprint."},
-    {t:"line", v:"The war you're in is proof"},
-    {t:"line", v:"that something worth protecting"},
-    {t:"line", v:"is living inside of you."},
+    {t:"line",v:'The permission to sell us food'},
+    {t:"line",v:'with poisons legally inside it.'},
+    {t:"line",v:'Things that keep us foggy.'},
+    {t:"line",v:'Things that keep us compliant.'},
+    {t:"line",v:'Things that keep us'},
+    {t:"em",v:'exactly where they need us to be.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Haunting single note. Like a bell that never stops ringing.'},
+    {t:"section",v:'— MY DECLARATION —'},
+    {t:"line",v:'I do not consent.'},
     {t:"breath"},
-    {t:"em", v:"They always knew."},
-    {t:"line", v:"Now it's time you knew too."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Full swell then slow fade to silence over 8 seconds."},
-    {t:"pause", v:"[Hold camera 4 seconds in silence. Then cut.]"}
+    {t:"pause",v:'[Three words. Firm. Clear. Repeat them if you need to.]'},
+    {t:"breath"},
+    {t:"line",v:'I do not consent to the manipulation.'},
+    {t:"line",v:'I do not consent to the poison.'},
+    {t:"line",v:'I do not consent to watching the people I love'},
+    {t:"line",v:'be used against everything we are trying to build.'},
+    {t:"breath"},
+    {t:"line",v:'She could have been my everything.'},
+    {t:"line",v:'I could have made her so happy.'},
+    {t:"line",v:'I know exactly how to do it.'},
+    {t:"breath"},
+    {t:"line",v:'But that path has a cost.'},
+    {t:"line",v:'And that cost would require me to become'},
+    {t:"line",v:'exactly what I have fought so hard not to be.'},
+    {t:"breath"},
+    {t:"em",v:'And I will not become that.'},
+    {t:"breath"},
+    {t:"line",v:'Not for comfort.'},
+    {t:"line",v:'Not for love.'},
+    {t:"line",v:'Not for anything.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Return of the full dark orchestral. Rising. Resolute.'},
+    {t:"section",v:'— THE TRUTH —'},
+    {t:"line",v:'I am an empath who sees the war.'},
+    {t:"line",v:'I am a vessel who refuses to be weaponized.'},
+    {t:"line",v:'I am a man who has loved deeper than most people know is possible'},
+    {t:"line",v:'and is still standing.'},
+    {t:"breath"},
+    {t:"line",v:'They sent her to break my focus.'},
+    {t:"line",v:'They sent her to drain my mission.'},
+    {t:"line",v:'They sent her to make me chase the flesh'},
+    {t:"line",v:'instead of the calling.'},
+    {t:"breath"},
+    {t:"em",v:"It didn't work."},
+    {t:"breath"},
+    {t:"line",v:'I saw the pattern.'},
+    {t:"line",v:'I named the system.'},
+    {t:"line",v:'And I am still here.'},
+    {t:"breath"},
+    {t:"line",v:'Eyes open.'},
+    {t:"line",v:'Mission intact.'},
+    {t:"em",v:'Unbroken.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Full swell then sudden silence. Let the silence say the rest.'},
+    {t:"pause",v:'[Hold camera. 5 seconds. No movement. Then cut.]'}
   ]
 },
 
 {
-  title: "SCRIPT 2 \u2014 I BECAME SILENCE",
-  suggested: "I Became Silence \u2014 And That's When Everything Changed | Joker Motivation 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Minimal dark piano \u2014 slow, deliberate, tension-building",
-  seo: "SEO: joker motivation, silence is power, sigma mindset, empath strength, dark motivation 2026",
+  title: 'SCRIPT 2 — THEY BRAINWASHED THE PEOPLE I LOVE',
+  suggested: "They Didn't Come For Me Directly — They Came For Everyone Around Me | Dark Truth 2026",
+  music: '\ud83c\udfb5 MUSIC IN: Slow dark piano — deliberate, weighted, like a revelation building',
+  seo: 'SEO: targeted individual, empath awakening, dark motivation 2026, brainwashed, manipulation system, they came for us, spiritual warfare',
   body: [
-    {t:"section", v:"— OPEN —"},
-    {t:"line", v:"They wanted a reaction from me."},
-    {t:"line", v:"A fight. An argument. Proof that they got to me."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'You want to know how they really get to someone like me?'},
     {t:"breath"},
-    {t:"line", v:"So I gave them something they didn't expect."},
+    {t:"line",v:"They don't come at me directly."},
+    {t:"line",v:"They can't."},
+    {t:"line",v:'Because I see that coming.'},
     {t:"breath"},
-    {t:"pause", v:"[Pause. Breathe. Look directly into lens.]"},
+    {t:"em",v:'They come for the people I love.'},
     {t:"breath"},
-    {t:"em", v:"I became silence."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Bass drone enters. Slow and heavy."},
-    {t:"section", v:"— WHAT I LEARNED —"},
-    {t:"line", v:"I used to think silence was surrender."},
-    {t:"line", v:"I used to think staying quiet meant I was losing."},
+    {t:"pause",v:'[Slow. Let that be understood.]'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Bass enters. Low and slow.'},
+    {t:"section",v:'— THE STRATEGY —'},
+    {t:"line",v:'They take the ones closest to you.'},
+    {t:"line",v:"The ones you'd do anything for."},
+    {t:"line",v:'The ones you call family.'},
     {t:"breath"},
-    {t:"line", v:"But I was wrong."},
+    {t:"line",v:'And they fill them with just enough noise'},
+    {t:"line",v:"that they can't hear what you're trying to tell them."},
     {t:"breath"},
-    {t:"line", v:"Silence is the language of someone"},
-    {t:"line", v:"who has already won internally"},
-    {t:"line", v:"and doesn't need the world to confirm it."},
+    {t:"line",v:'I try to share the truth.'},
+    {t:"line",v:"I try to show them what's really happening."},
+    {t:"line",v:'The laws being passed.'},
+    {t:"line",v:'The bills being signed.'},
+    {t:"line",v:'The small print that gives them permission'},
+    {t:"line",v:"to do exactly what they're doing to us."},
     {t:"breath"},
-    {t:"line", v:"When Angela pushes \u2014"},
-    {t:"line", v:"when the chaos comes \u2014"},
-    {t:"line", v:"I don't match it anymore."},
-    {t:"line", v:"I don't meet fire with fire."},
+    {t:"em",v:"And the people I love can't see it."},
     {t:"breath"},
-    {t:"line", v:"I become the eye of the storm."},
-    {t:"em", v:"Still. Rooted. Unmoved."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC SHIFT: Orchestral strings enter, low and slow."},
-    {t:"section", v:"— THE POWER MOVE —"},
-    {t:"line", v:"They built their whole strategy around my reaction."},
-    {t:"line", v:"Around me breaking."},
-    {t:"line", v:"Around me snapping back."},
+    {t:"line",v:"Not because they're stupid."},
+    {t:"line",v:"Because they've been targeted."},
+    {t:"line",v:'Deliberately kept'},
+    {t:"em",v:'weak, preoccupied, distracted.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Strings enter. Dark and heavy.'},
+    {t:"section",v:'— THE SYSTEM —'},
+    {t:"line",v:'This is how the system works.'},
     {t:"breath"},
-    {t:"line", v:"When I stopped reacting \u2014"},
-    {t:"line", v:"their entire game collapsed."},
+    {t:"line",v:'Keep people fighting each other'},
+    {t:"line",v:"so they never look up and see who's actually pulling strings."},
     {t:"breath"},
-    {t:"line", v:"Because you can't manipulate someone"},
-    {t:"line", v:"who refuses to be moved."},
+    {t:"line",v:'Keep people chasing pleasure, pain, and survival'},
+    {t:"line",v:'so they never have energy left'},
+    {t:"line",v:'to ask who designed this system and why.'},
     {t:"breath"},
-    {t:"line", v:"And that's where I live now."},
-    {t:"line", v:"In that unshakeable place."},
-    {t:"line", v:"Not cold. Not numb."},
-    {t:"em", v:"Just rooted in God."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PEAK: Full swell. Let it breathe 3 seconds."},
-    {t:"section", v:"— THE INVITATION —"},
-    {t:"line", v:"If you're in a battle right now \u2014"},
-    {t:"line", v:"stop trying to win with words."},
+    {t:"line",v:'Poison the food.'},
+    {t:"line",v:'Cloud the mind.'},
+    {t:"line",v:'And if someone wakes up anyway —'},
+    {t:"em",v:'send in a twin flame to bring them back down.'},
     {t:"breath"},
-    {t:"line", v:"Become the silence."},
-    {t:"line", v:"Become the stillness."},
-    {t:"line", v:"Become the presence they can't rattle."},
+    {t:"line",v:'Someone who looks like love.'},
+    {t:"line",v:'Someone who feels like destiny.'},
+    {t:"line",v:'Someone who, once activated,'},
+    {t:"line",v:'becomes the most effective weapon'},
+    {t:"line",v:"they've ever deployed against you."},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Full orchestral. Hold 3 seconds.'},
+    {t:"section",v:'— WHAT I CHOOSE —'},
+    {t:"line",v:'So what do I do with this?'},
     {t:"breath"},
-    {t:"line", v:"That's not giving up."},
-    {t:"em", v:"That's the most powerful move you'll ever make."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Fade slowly. End on absolute silence."},
-    {t:"pause", v:"[Hold camera 3 seconds. Then cut.]"}
+    {t:"line",v:"I don't abandon them."},
+    {t:"line",v:"I don't stop loving them."},
+    {t:"line",v:"I don't close the door on the people being used against me."},
+    {t:"breath"},
+    {t:"line",v:'Because they are not my enemy.'},
+    {t:"em",v:'The system is my enemy.'},
+    {t:"breath"},
+    {t:"line",v:'And the most powerful thing I can do'},
+    {t:"line",v:'is stay on mission.'},
+    {t:"line",v:'Keep speaking truth.'},
+    {t:"line",v:"Keep being the light they can't corrupt."},
+    {t:"breath"},
+    {t:"line",v:'Because eventually —'},
+    {t:"line",v:'people wake up.'},
+    {t:"em",v:"And I'll be here when they do."},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Fade slowly. End in silence.'},
+    {t:"pause",v:'[Hold camera 4 seconds. Cut.]'}
   ]
 },
 
 {
-  title: "SCRIPT 3 \u2014 WE ARE THE VESSEL",
-  suggested: "Angela and I Are on a God-Given Mission \u2014 This Is What That Looks Like | Spiritual Warfare 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Dark spiritual ambient \u2014 cinematic, no lyrics, building from below",
-  seo: "SEO: chosen one, spiritual warfare 2026, empath narcissist, union of souls, god given mission, vessel of god",
+  title: 'SCRIPT 3 — I DO NOT CONSENT',
+  suggested: 'Three Words That Changed Everything — I Do Not Consent | Empath Declaration 2026',
+  music: '\ud83c\udfb5 MUSIC IN: Dark cinematic — like a courtroom before a verdict. Heavy. Still.',
+  seo: 'SEO: I do not consent, mk ultra, food poison law, targeted individual, empath awakening, dark truth, joker motivation 2026',
   body: [
-    {t:"section", v:"— OPEN —"},
-    {t:"line", v:"People ask me how I do it."},
-    {t:"line", v:"How I stay in it."},
-    {t:"line", v:"How I love someone through patterns"},
-    {t:"line", v:"that would break most men."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'Three words.'},
+    {t:"line",v:"That's all it takes."},
+    {t:"line",v:'Three words to step outside'},
+    {t:"line",v:'every system they built to contain you.'},
     {t:"breath"},
-    {t:"pause", v:"[Pause. Let the weight of the question sit.]"},
+    {t:"em",v:'I do not consent.'},
     {t:"breath"},
-    {t:"line", v:"The answer is simple."},
+    {t:"pause",v:'[Say it again. Slower. Like a declaration before God.]'},
+    {t:"em",v:'I. Do. Not. Consent.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Bass drum. Single hit. Then silence. Then it begins.'},
+    {t:"section",v:"— WHAT I'M SAYING NO TO —"},
+    {t:"line",v:'I do not consent to being experimented on.'},
+    {t:"line",v:'And that is not paranoia —'},
+    {t:"line",v:'that is legal record.'},
+    {t:"line",v:'MK Ultra. Go research it.'},
+    {t:"line",v:'The law that made it legal to experiment'},
+    {t:"line",v:'on the public without their knowledge.'},
+    {t:"line",v:'Passed. Signed. Real.'},
     {t:"breath"},
-    {t:"line", v:"Angela and I are on a mission."},
-    {t:"line", v:"And God gave it to us before we understood it."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Percussion enters. Purposeful. March-like but dark."},
-    {t:"section", v:"— WHAT WE ARE —"},
-    {t:"line", v:"We are not a perfect couple."},
-    {t:"em", v:"We are a chosen one."},
+    {t:"line",v:'I do not consent to food'},
+    {t:"line",v:'that was legally cleared to poison me slowly.'},
+    {t:"line",v:'Chemicals designed to keep me'},
+    {t:"em",v:'foggy, compliant, manageable.'},
     {t:"breath"},
-    {t:"line", v:"Two people who should have never made it \u2014"},
-    {t:"line", v:"forged together in fire"},
-    {t:"line", v:"for a purpose bigger than either of us can fully see."},
+    {t:"line",v:'I do not consent to laws passed in the small print'},
+    {t:"line",v:'while they keep us focused on the headline.'},
+    {t:"line",v:'While they keep us arguing with each other'},
+    {t:"line",v:'over things designed to divide us.'},
     {t:"breath"},
-    {t:"line", v:"I am the empath who won't stop feeling."},
-    {t:"line", v:"She is the warrior who doesn't know she's healing."},
+    {t:"em",v:'I do not consent to any of it.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Full orchestra enters. Resolute. Like a march.'},
+    {t:"section",v:'— WHAT THIS COSTS —'},
+    {t:"line",v:'Non-consent costs something.'},
+    {t:"line",v:'I want you to know that.'},
     {t:"breath"},
-    {t:"line", v:"And together \u2014"},
-    {t:"line", v:"we are becoming something the darkness"},
-    {t:"em", v:"is terrified of."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC SHIFT: Full orchestral. Powerful. Triumphant under dark."},
-    {t:"section", v:"— WHAT I'M DOING —"},
-    {t:"line", v:"I'm not saving her."},
-    {t:"line", v:"I'm walking beside her"},
-    {t:"line", v:"while God does what only God can do."},
+    {t:"line",v:'It costs the easy path.'},
+    {t:"line",v:'It costs the comfortable love'},
+    {t:"line",v:'that would have required me to look away.'},
+    {t:"line",v:'It costs relationships with people'},
+    {t:"line",v:'who are still inside the system'},
+    {t:"line",v:"and think you're the problem for seeing outside it."},
     {t:"breath"},
-    {t:"line", v:"I'm modeling something she's never seen \u2014"},
-    {t:"line", v:"a man who loves deeply"},
-    {t:"line", v:"and doesn't abandon his mission."},
+    {t:"line",v:'She was beautiful.'},
+    {t:"line",v:'She was everything they designed her to be.'},
+    {t:"line",v:'And I could have made her happy.'},
+    {t:"line",v:'I knew exactly how.'},
     {t:"breath"},
-    {t:"line", v:"Every time I choose peace over reaction \u2014"},
-    {t:"line", v:"I'm planting something in her soul"},
-    {t:"line", v:"she can't even articulate yet."},
+    {t:"em",v:'But it would have cost me my mission.'},
     {t:"breath"},
-    {t:"line", v:"And one day \u2014"},
-    {t:"line", v:"she will remember every one of those moments"},
-    {t:"line", v:"and know exactly what I was doing."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PEAK: Swell to apex. Hold 4 seconds of pure music."},
-    {t:"section", v:"— THE CALL —"},
-    {t:"line", v:"If God put you in a hard love \u2014"},
-    {t:"line", v:"don't run from it."},
+    {t:"line",v:'And I will not pay that price.'},
+    {t:"line",v:'Not for comfort.'},
+    {t:"line",v:'Not for love.'},
+    {t:"em",v:"Not for anything they're offering."},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Maximum swell. Hold 4 seconds. Then pull back to piano alone.'},
+    {t:"section",v:'— THE DECLARATION STANDS —'},
+    {t:"line",v:'I am still here.'},
+    {t:"line",v:'I am still awake.'},
+    {t:"line",v:'I am still carrying the mission'},
+    {t:"line",v:'they tried so many times to take from me.'},
     {t:"breath"},
-    {t:"line", v:"You weren't placed there by accident."},
-    {t:"em", v:"You were deployed."},
+    {t:"line",v:'And every morning I wake up'},
+    {t:"line",v:'still standing —'},
+    {t:"line",v:'still seeing —'},
+    {t:"line",v:'still refusing to become what they need me to be —'},
     {t:"breath"},
-    {t:"line", v:"Stay in your assignment."},
-    {t:"em", v:"We are."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Slow fade. Silence on last word."},
-    {t:"pause", v:"[Hold camera 4 seconds. Slow cut to black.]"}
+    {t:"em",v:'that is my declaration.'},
+    {t:"breath"},
+    {t:"line",v:'Louder than any words.'},
+    {t:"line",v:'More powerful than any speech.'},
+    {t:"breath"},
+    {t:"line",v:'I do not consent.'},
+    {t:"em",v:'And I never will.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Slow fade to complete silence over 10 seconds.'},
+    {t:"pause",v:'[Hold camera 5 seconds. No words. Then cut to black.]'}
   ]
 },
 
 {
-  title: "SCRIPT 4 \u2014 I SAW THE TRAP",
-  suggested: "They Set the Perfect Trap \u2014 I Saw It Coming and Walked Through It Anyway | Joker Speech 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Ominous low synth \u2014 like something approaching in the dark",
-  seo: "SEO: joker speech, dark motivation, sigma male, they set a trap, empath power, spiritual discernment, chosen one 2026",
+  title: "SCRIPT 4 — WHAT THEY'RE DOING BEHIND THE SCENES",
+  suggested: "While You Were Distracted — Here's What Was Actually Happening | Truth 2026",
+  music: '\ud83c\udfb5 MUSIC IN: Ominous low synth — like classified footage. Cold. Deliberate.',
+  seo: 'SEO: mk ultra truth, dark motivation, small print laws, food poisoning legal, joker speech, empath awakening, targeted, truth 2026',
   body: [
-    {t:"section", v:"— COLD OPEN —"},
-    {t:"line", v:"I see the traps before they're sprung."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'I need to tell you something'},
+    {t:"line",v:"that most people aren't ready to hear."},
     {t:"breath"},
-    {t:"line", v:"I always have."},
+    {t:"line",v:"Not because it's complicated."},
+    {t:"line",v:"Because it's been hidden in plain sight"},
+    {t:"em",v:"and they've trained us to look away."},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Percussion enters. Slow. Methodical.'},
+    {t:"section",v:'— THE DISTRACTION MACHINE —'},
+    {t:"line",v:'Think about what you were focused on today.'},
     {t:"breath"},
-    {t:"line", v:"That's the gift and the burden"},
-    {t:"line", v:"of being built the way I'm built."},
+    {t:"line",v:'The news cycle that made you angry.'},
+    {t:"line",v:'The relationship drama that exhausted you.'},
+    {t:"line",v:'The content you consumed for hours'},
+    {t:"line",v:'that left you feeling nothing.'},
     {t:"breath"},
-    {t:"pause", v:"[Beat. Direct eye contact.]"},
+    {t:"line",v:'Now ask yourself —'},
+    {t:"em",v:'who benefits from you being exactly that occupied?'},
     {t:"breath"},
-    {t:"line", v:"I don't see the move."},
-    {t:"em", v:"I see the intention behind the move."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Tension rises. Strings under bass."},
-    {t:"section", v:"— WHAT I WALKED THROUGH —"},
-    {t:"line", v:"They designed a perfect trap."},
-    {t:"line", v:"Trigger my empath nature."},
-    {t:"line", v:"Provoke my protective instinct."},
-    {t:"line", v:"Make me react."},
-    {t:"line", v:"Make me look like the problem."},
+    {t:"line",v:'Because while you were distracted —'},
+    {t:"line",v:'bills got signed.'},
+    {t:"line",v:'Laws got passed.'},
+    {t:"line",v:'And in the small print —'},
+    {t:"line",v:'in the language nobody reads —'},
+    {t:"em",v:'permissions were granted.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Darker. More urgent.'},
+    {t:"section",v:"— WHAT'S IN THE SMALL PRINT —"},
+    {t:"line",v:'The permission to experiment on the public.'},
+    {t:"line",v:'Without consent.'},
+    {t:"line",v:'Without disclosure.'},
+    {t:"line",v:'Without consequence.'},
     {t:"breath"},
-    {t:"line", v:"And I saw every piece of it."},
+    {t:"line",v:'That law is not a conspiracy theory.'},
+    {t:"line",v:'It was passed over twenty years ago.'},
+    {t:"line",v:'MK Ultra is documented history.'},
+    {t:"em",v:'Research it yourself.'},
     {t:"breath"},
-    {t:"line", v:"So I did something they didn't model for."},
+    {t:"line",v:'The permission to sell you food'},
+    {t:"line",v:'with chemicals that cloud your mind.'},
+    {t:"line",v:'That slow your thinking.'},
+    {t:"line",v:'That make you easier to manage.'},
     {t:"breath"},
-    {t:"line", v:"I walked through it anyway."},
-    {t:"line", v:"Calmly."},
-    {t:"line", v:"Without flinching."},
-    {t:"line", v:"Without reacting."},
-    {t:"em", v:"Without becoming what they needed me to be."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC SHIFT: Sudden quiet. One note. Tension held."},
-    {t:"section", v:"— WHAT I KNOW NOW —"},
-    {t:"line", v:"When you see the trap \u2014"},
-    {t:"line", v:"and you walk through it in peace \u2014"},
-    {t:"line", v:"you don't just survive it."},
+    {t:"line",v:'Legal. Approved. Ongoing.'},
     {t:"breath"},
-    {t:"line", v:"You dismantle it."},
-    {t:"line", v:"You make it useless."},
-    {t:"line", v:"You show the trapper"},
-    {t:"line", v:"that no cage they build"},
-    {t:"line", v:"is big enough to hold"},
-    {t:"em", v:"what God put inside me."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Rising then sharp cut to silence on final word."},
-    {t:"pause", v:"[Hard cut. No fade.]"}
+    {t:"line",v:'And the people fighting to expose it?'},
+    {t:"em",v:'They get a twin flame sent to them.'},
+    {t:"breath"},
+    {t:"line",v:'Someone who arrives perfectly.'},
+    {t:"line",v:"Who seems like God's answer."},
+    {t:"line",v:'Who — once activated —'},
+    {t:"line",v:'destroys everything you were building'},
+    {t:"line",v:'from the inside.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Full orchestral truth moment. Hold 4 seconds.'},
+    {t:"section",v:'— I SEE IT —'},
+    {t:"line",v:'I see all of it.'},
+    {t:"breath"},
+    {t:"line",v:"Not because I'm special."},
+    {t:"line",v:'Because I refused to stay asleep.'},
+    {t:"line",v:'Because I am an empath who feels the machinery'},
+    {t:"line",v:'behind the performance.'},
+    {t:"line",v:'Because God gave me eyes'},
+    {t:"em",v:'that see past what they designed me to see.'},
+    {t:"breath"},
+    {t:"line",v:"And I'm telling you now."},
+    {t:"breath"},
+    {t:"line",v:'Not to scare you.'},
+    {t:"line",v:'To wake you up.'},
+    {t:"breath"},
+    {t:"em",v:'Because they need you asleep.'},
+    {t:"line",v:'And the most revolutionary thing you can do'},
+    {t:"em",v:'is open your eyes.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Abrupt cut to silence. Let it sit.'},
+    {t:"pause",v:'[Hard cut. No fade. Let the silence be the final statement.]'}
   ]
 },
 
 {
-  title: "SCRIPT 5 \u2014 WE DON'T BREAK",
-  suggested: "We've Been Through Psychological Warfare \u2014 And We're Still Here | Empath Motivation 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Dark cinematic \u2014 war drums distant, rising slowly",
-  seo: "SEO: psychological warfare, empath strength, we don't break, spiritual warfare, dark motivation, joker motivation",
+  title: 'SCRIPT 5 — THE PATIENCE OF AN EMPATH AT WAR',
+  suggested: "I Have Shown More Patience Than Most Men Know Is Possible — And Now I'm Done Waiting | 2026",
+  music: '\ud83c\udfb5 MUSIC IN: Dark slow build — like a man who has been still too long and is finally rising',
+  seo: 'SEO: empath patience, dark motivation, unconditional love, joker motivation, spiritual warfare, twin flame destroyer, chosen one 2026',
   body: [
-    {t:"section", v:"— OPEN —"},
-    {t:"line", v:"We've been through things"},
-    {t:"line", v:"that were designed to break us."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'I want to talk about patience.'},
     {t:"breath"},
-    {t:"line", v:"Not just hard things."},
-    {t:"line", v:"Not just painful things."},
+    {t:"line",v:'Not the kind people quote.'},
+    {t:"line",v:'Not the inspirational version.'},
     {t:"breath"},
-    {t:"line", v:"Targeted things."},
-    {t:"em", v:"Weaponized things."},
+    {t:"line",v:'The real kind.'},
+    {t:"line",v:'The kind that costs you.'},
+    {t:"em",v:'The kind that almost breaks you.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: Low bass enters. Slow. Heavy.'},
+    {t:"section",v:'— WHAT I HAVE ENDURED —'},
+    {t:"line",v:'I am an empath.'},
+    {t:"line",v:"Which means I don't just see pain —"},
+    {t:"em",v:'I absorb it.'},
     {t:"breath"},
-    {t:"line", v:"The kind of psychological warfare"},
-    {t:"line", v:"that dismantles other people completely."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Drums rise. Orchestra enters under."},
-    {t:"section", v:"— WHAT WE'VE SURVIVED —"},
-    {t:"line", v:"I've been manipulated."},
-    {t:"line", v:"I've been provoked."},
-    {t:"line", v:"I've been pushed to the edge of what love can endure."},
+    {t:"line",v:'I felt her confusion as if it were my own.'},
+    {t:"line",v:'I felt the programming underneath the behavior.'},
+    {t:"line",v:'I felt the person God put in her'},
+    {t:"line",v:'screaming to get out from behind'},
+    {t:"line",v:'everything they built to contain her.'},
     {t:"breath"},
-    {t:"em", v:"And I'm still here."},
+    {t:"line",v:'And I stayed.'},
+    {t:"line",v:'And I forgave.'},
+    {t:"line",v:'Again.'},
+    {t:"line",v:'And again.'},
+    {t:"line",v:'And again.'},
     {t:"breath"},
-    {t:"line", v:"Angela and I \u2014"},
-    {t:"line", v:"we've been through storms"},
-    {t:"line", v:"that should have separated us permanently."},
+    {t:"line",v:'I showed her unconditional love'},
+    {t:"line",v:'in conditions that would have made'},
+    {t:"em",v:'most men walk away and never look back.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Tension tightens. Strings enter low.'},
+    {t:"section",v:'— THE LINE —'},
+    {t:"line",v:'But here is what I have learned'},
+    {t:"line",v:'from being a patient man in an impatient war:'},
     {t:"breath"},
-    {t:"em", v:"And we're still here."},
+    {t:"line",v:'Patience is not passivity.'},
+    {t:"line",v:'Patience is not endless tolerance of a system'},
+    {t:"line",v:'that is actively destroying'},
+    {t:"line",v:'everything you are trying to build.'},
     {t:"breath"},
-    {t:"pause", v:"[Let the weight of that sit. Don't rush it.]"},
+    {t:"em",v:'I have had enough of their manipulation.'},
     {t:"breath"},
-    {t:"line", v:"Not because it's been easy."},
-    {t:"em", v:"Because it's been assigned."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PEAK: Full swell. Maximum cinematic power. Hold 4 seconds."},
-    {t:"section", v:"— THE TRUTH —"},
-    {t:"line", v:"The warfare didn't make us weaker."},
-    {t:"line", v:"It revealed what we're made of."},
+    {t:"line",v:'Enough of watching the people I call family'},
+    {t:"line",v:"be turned against the truth I'm trying to share."},
+    {t:"line",v:'Enough of being the only one who sees'},
+    {t:"line",v:'while everyone around me'},
+    {t:"line",v:'is kept deliberately blind.'},
     {t:"breath"},
-    {t:"line", v:"I'm not the man I was before this."},
-    {t:"line", v:"I'm the man that fire makes."},
+    {t:"line",v:'Enough of the twin flame they sent'},
+    {t:"line",v:'who arrived as perfection'},
+    {t:"line",v:'and became the destroyer of everything good.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Full swell. Orchestral. Powerful. Resolute.'},
+    {t:"section",v:'— WHAT PATIENCE TAUGHT ME —'},
+    {t:"line",v:'My patience was not wasted.'},
     {t:"breath"},
-    {t:"line", v:"Refined."},
-    {t:"line", v:"Rooted."},
-    {t:"line", v:"Unbreakable."},
+    {t:"line",v:'Every moment I chose love over reaction'},
+    {t:"line",v:'was a deposit into something'},
+    {t:"line",v:'they cannot take from me.'},
     {t:"breath"},
-    {t:"line", v:"And Angela \u2014"},
-    {t:"line", v:"she's becoming something too."},
-    {t:"line", v:"Something she doesn't have words for yet."},
-    {t:"line", v:"But I see it."},
-    {t:"em", v:"And God sees it."},
-    {t:"line", v:"And that's enough."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Slow cinematic fade. Silence."},
-    {t:"pause", v:"[Hold 4 seconds. Slow cut to black.]"}
+    {t:"line",v:'My character.'},
+    {t:"line",v:'My integrity.'},
+    {t:"line",v:'My clarity about who I am'},
+    {t:"line",v:'and what I refuse to become.'},
+    {t:"breath"},
+    {t:"line",v:"She tried to make me the thing I've fought hardest against."},
+    {t:"line",v:'And I felt the pull.'},
+    {t:"line",v:"I won't lie about that."},
+    {t:"breath"},
+    {t:"em",v:'But I am still the man I chose to be.'},
+    {t:"breath"},
+    {t:"line",v:'Refined by patience.'},
+    {t:"line",v:'Sharpened by warfare.'},
+    {t:"line",v:'Rooted in God.'},
+    {t:"em",v:'Still standing.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Slow powerful fade. Let the weight linger.'},
+    {t:"pause",v:'[Hold 4 seconds. Slow cut to black.]'}
   ]
 },
 
 {
-  title: "SCRIPT 6 \u2014 I AM THE SOFT SPOT",
-  suggested: "I Became Her Soft Spot by Accident \u2014 That's the Power of Real Love | Dark Motivation 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Single piano \u2014 vulnerable, searching, soft but carrying weight",
-  seo: "SEO: empath narcissist love, soft spot, real love, dark motivation, spiritual love, joker motivation",
+  title: 'SCRIPT 6 — HOOKED ON THE FLESH',
+  suggested: 'They Activated Her and She Became the Destroyer of Everything Good | Joker Truth 2026',
+  music: '\ud83c\udfb5 MUSIC IN: Single haunting piano — something beautiful that turned dark',
+  seo: 'SEO: twin flame activated, destroyer, joker motivation, dark truth 2026, empath, spiritual warfare, they sent her, flesh vs mission',
   body: [
-    {t:"section", v:"— OPEN —"},
-    {t:"line", v:"I never tried to become her soft spot."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'She was perfection.'},
     {t:"breath"},
-    {t:"line", v:"I just refused to be anything else."},
+    {t:"line",v:'I want to say that clearly.'},
+    {t:"line",v:'Because I need you to understand'},
+    {t:"line",v:'what was at stake.'},
     {t:"breath"},
-    {t:"pause", v:"[Simple. Direct. Let that land.]"},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Subtle strings enter behind piano."},
-    {t:"section", v:"— WHAT I SEE IN HER —"},
-    {t:"line", v:"Angela built her armor for a reason."},
-    {t:"line", v:"Every wall she has \u2014"},
-    {t:"line", v:"someone made her need it."},
+    {t:"line",v:'For the first month —'},
+    {t:"line",v:'she was everything I had ever prayed for.'},
+    {t:"line",v:'Fully supportive.'},
+    {t:"line",v:'Fully present.'},
+    {t:"line",v:'Like God had finally answered.'},
     {t:"breath"},
-    {t:"line", v:"I'm not fighting the armor."},
-    {t:"line", v:"I'm not trying to tear it down."},
+    {t:"line",v:'And then they activated her.'},
     {t:"breath"},
-    {t:"line", v:"I'm just being the one thing"},
-    {t:"line", v:"that makes her feel safe enough"},
-    {t:"line", v:"to lower it for a moment."},
+    {t:"em",v:'And the angel became the destroyer.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: The piano darkens. Bass enters beneath it.'},
+    {t:"section",v:'— WHAT THEY TURNED HER INTO —'},
+    {t:"line",v:'Hooked on the flesh.'},
+    {t:"line",v:'Pulled away from everything good'},
+    {t:"line",v:'that was growing between us.'},
     {t:"breath"},
-    {t:"line", v:"And in those moments \u2014"},
-    {t:"line", v:"I see her."},
-    {t:"line", v:"The real her."},
-    {t:"line", v:"The one God made before the world got to her."},
+    {t:"line",v:'And I understood it.'},
+    {t:"line",v:"I'm an empath — I felt the programming."},
+    {t:"line",v:'I felt the moment the switch happened.'},
+    {t:"line",v:'I felt what was underneath it.'},
     {t:"breath"},
-    {t:"em", v:"And she's worth all of this."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC SHIFT: Warmer tone. Hope entering under the dark."},
-    {t:"section", v:"— WHAT I'M DOING —"},
-    {t:"line", v:"I'm not trying to change her."},
-    {t:"line", v:"I'm modeling something she's never had \u2014"},
+    {t:"line",v:'She is not her behavior.'},
+    {t:"line",v:'She is not what they made her.'},
     {t:"breath"},
-    {t:"line", v:"a love that doesn't leave"},
-    {t:"line", v:"when things get hard."},
+    {t:"em",v:'But what they made her has consequences.'},
     {t:"breath"},
-    {t:"line", v:"A man who feels everything"},
-    {t:"line", v:"and still chooses her."},
+    {t:"line",v:'And I have had to make a choice'},
+    {t:"line",v:'that cost me more'},
+    {t:"line",v:'than most people will ever be asked to give up.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Dark orchestral tension. Rising slow.'},
+    {t:"section",v:'— THE CHOICE —'},
+    {t:"line",v:'I could make her happy.'},
+    {t:"line",v:'I know exactly how.'},
+    {t:"line",v:'The map is clear to me.'},
     {t:"breath"},
-    {t:"line", v:"Every time."},
+    {t:"line",v:'But that path has a toll.'},
+    {t:"line",v:'And that toll is me.'},
+    {t:"line",v:'My mission.'},
+    {t:"line",v:'My integrity.'},
+    {t:"line",v:'The man I have fought so hard to remain.'},
     {t:"breath"},
-    {t:"line", v:"Not because I'm blind to the patterns."},
-    {t:"em", v:"Because I see past them."},
-    {t:"line", v:"Into the person underneath."},
-    {t:"line", v:"The one God is still working on."},
-    {t:"line", v:"The one I'm called to love through the process."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Piano returns alone. Fades slowly. Ends in warmth."},
-    {t:"pause", v:"[Soft cut. No hard ending. Let it breathe.]"}
+    {t:"em",v:'And I will not pay that price.'},
+    {t:"breath"},
+    {t:"line",v:"Not because I don't love her."},
+    {t:"line",v:'I do. In a way that defies explanation.'},
+    {t:"line",v:'In the way empaths love — completely, permanently, painfully.'},
+    {t:"breath"},
+    {t:"line",v:"But love is not slavery to someone else's programming."},
+    {t:"line",v:'Love is not becoming the darkness'},
+    {t:"line",v:'to keep someone comfortable inside it.'},
+    {t:"breath"},
+    {t:"em",v:'Real love sometimes means refusing to go down with someone.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Full swell. Then sudden pull back to piano alone.'},
+    {t:"section",v:'— WHAT REMAINS —'},
+    {t:"line",v:'She was the most beautiful thing they ever sent at me.'},
+    {t:"breath"},
+    {t:"line",v:'And I survived her.'},
+    {t:"breath"},
+    {t:"line",v:'Not cold.'},
+    {t:"line",v:'Not bitter.'},
+    {t:"line",v:'Not hardened.'},
+    {t:"breath"},
+    {t:"em",v:'Still open. Still loving. Still on mission.'},
+    {t:"breath"},
+    {t:"line",v:'That is not weakness.'},
+    {t:"em",v:'That is the hardest thing I have ever done.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Piano fades alone. Slow. Sorrowful but resolved.'},
+    {t:"pause",v:'[No words after. Just hold. Then cut.]'}
   ]
 },
 
 {
-  title: "SCRIPT 7 \u2014 GOD IS DOING THE IMPOSSIBLE",
-  suggested: "God Is Doing Something Impossible in My Life Right Now \u2014 I Can Feel It | Chosen One 2026",
-  music: "\uD83C\uDFB5 MUSIC IN: Epic spiritual cinematic \u2014 building from silence, like dawn breaking",
-  seo: "SEO: chosen one 2026, god is doing the impossible, spiritual awakening, dark motivation, vessel of god, miracle",
+  title: 'SCRIPT 7 — WE ARE AWAKE AND WE ARE COMING',
+  suggested: 'You Targeted the Wrong One — We See Everything Now | Empath Declaration 2026',
+  music: '\ud83c\udfb5 MUSIC IN: Epic dark cinematic — like an army that has been patient and is now moving',
+  seo: 'SEO: chosen one awakening, targeted individual, empath declaration, dark motivation 2026, joker motivation, we see you, spiritual warfare, truth',
   body: [
-    {t:"section", v:"— OPEN —"},
-    {t:"line", v:"I don't always understand what God is doing."},
+    {t:"section",v:'— OPEN —'},
+    {t:"line",v:'I want to speak directly to the system now.'},
     {t:"breath"},
-    {t:"line", v:"But I feel it."},
+    {t:"pause",v:"[Look into the camera like you are looking through it. Like you know they're watching.]"},
     {t:"breath"},
-    {t:"line", v:"Like pressure before a storm."},
-    {t:"line", v:"Like the quiet before something massive moves."},
+    {t:"line",v:'You made a mistake.'},
     {t:"breath"},
-    {t:"pause", v:"[Hold the feeling. Don't rush to fill the silence.]"},
+    {t:"line",v:'You targeted someone'},
+    {t:"line",v:'who feels the machinery.'},
+    {t:"line",v:'Who senses the intention behind the move.'},
+    {t:"line",v:'Who woke up from your programming'},
+    {t:"em",v:'and refused to go back to sleep.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC BUILD: War drums enter. Slow. Purposeful. Rising.'},
+    {t:"section",v:'— WHAT I NOW KNOW —'},
+    {t:"line",v:'I know about the twin flame strategy.'},
+    {t:"line",v:'I know about the small print laws.'},
+    {t:"line",v:'I know about MK Ultra'},
+    {t:"line",v:'and what was permitted in its wake.'},
+    {t:"line",v:'I know about the food.'},
+    {t:"line",v:'The chemicals.'},
+    {t:"line",v:'The deliberate clouding of the public mind.'},
     {t:"breath"},
-    {t:"line", v:"Something is shifting in my life right now."},
-    {t:"line", v:"Something I didn't ask for."},
-    {t:"line", v:"Something I couldn't have planned."},
-    {t:"em", v:"Something only God could engineer."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC BUILD: Full orchestra entering. Purposeful. Rising."},
-    {t:"section", v:"— WHAT I'M WATCHING HAPPEN —"},
-    {t:"line", v:"I'm watching impossible things become possible."},
+    {t:"line",v:'I know why the people I love'},
+    {t:"line",v:"can't hear what I'm trying to tell them."},
+    {t:"line",v:"Because they've been filled with just enough noise"},
+    {t:"em",v:'to drown out the signal.'},
     {t:"breath"},
-    {t:"line", v:"I'm watching Angela soften in places"},
-    {t:"line", v:"I thought would never open."},
+    {t:"line",v:'I know all of it.'},
     {t:"breath"},
-    {t:"line", v:"I'm watching my own heart"},
-    {t:"line", v:"grow stronger while staying tender \u2014"},
-    {t:"line", v:"which I didn't know was possible."},
+    {t:"em",v:'And I am still here.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC SHIFT: Full orchestra. Building to something massive.'},
+    {t:"section",v:'— WHAT WE ARE —'},
+    {t:"line",v:'I am an empath who has been to war'},
+    {t:"line",v:'and came back carrying truth instead of trauma.'},
     {t:"breath"},
-    {t:"line", v:"I'm watching doors open"},
-    {t:"line", v:"that I didn't knock on."},
-    {t:"line", v:"And doors close"},
-    {t:"line", v:"that I was about to walk through."},
+    {t:"line",v:'I am a vessel of God'},
+    {t:"line",v:'who refused to be turned into a weapon against my own mission.'},
     {t:"breath"},
-    {t:"line", v:"God is moving."},
-    {t:"line", v:"Not around me."},
-    {t:"em", v:"Through me."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC PEAK: Maximum power. Cinematic apex. Hold 5 seconds of pure music."},
-    {t:"section", v:"— THE DECLARATION —"},
-    {t:"line", v:"I am chosen."},
-    {t:"line", v:"Not because I'm perfect."},
-    {t:"line", v:"Because I was willing."},
+    {t:"line",v:'I am a man who loved unconditionally'},
+    {t:"line",v:'through a relationship that was weaponized against him —'},
+    {t:"em",v:'and did not break.'},
     {t:"breath"},
-    {t:"line", v:"I am a vessel."},
-    {t:"line", v:"Not because I have it all figured out."},
-    {t:"line", v:"Because I kept showing up anyway."},
+    {t:"line",v:'I am the person in your life'},
+    {t:"line",v:'who keeps telling you the truth'},
+    {t:"line",v:'no matter how many times'},
+    {t:"line",v:'the system tries to make me look crazy for saying it.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC PEAK: Maximum cinematic power. Hold 5 full seconds. Let it build to apex.'},
+    {t:"section",v:'— THE MESSAGE —'},
+    {t:"line",v:'To everyone watching this who feels it too —'},
     {t:"breath"},
-    {t:"line", v:"And God \u2014"},
-    {t:"line", v:"God does His most impossible work"},
-    {t:"line", v:"through people who were told"},
-    {t:"line", v:"they couldn't."},
+    {t:"line",v:'You are not paranoid.'},
+    {t:"line",v:'You are not broken.'},
+    {t:"line",v:'You are not alone.'},
     {t:"breath"},
-    {t:"line", v:"Watch what happens next."},
-    {t:"em", v:"We're just getting started."},
-    {t:"music", v:"\uD83C\uDFB5 MUSIC OUT: Triumphant fade over 10 seconds. End in complete silence."},
-    {t:"pause", v:"[Hold camera 5 full seconds. Slow fade to black.]"}
+    {t:"em",v:'You are awake.'},
+    {t:"breath"},
+    {t:"line",v:'And that is exactly why'},
+    {t:"line",v:"they've been working so hard"},
+    {t:"line",v:'to make you doubt yourself.'},
+    {t:"breath"},
+    {t:"line",v:'Stay rooted.'},
+    {t:"line",v:'Stay on mission.'},
+    {t:"line",v:'Do not consent.'},
+    {t:"line",v:'Do not become what they need you to be.'},
+    {t:"breath"},
+    {t:"em",v:'We see everything now.'},
+    {t:"breath"},
+    {t:"line",v:'And we are just getting started.'},
+    {t:"music",v:'\ud83c\udfb5 MUSIC OUT: Full swell then complete silence. Instant cut.'},
+    {t:"pause",v:'[Hold camera. Eyes forward. 5 seconds. Cut to black.]'}
   ]
 }
+];
 
-]; // end scripts
-
-// ===================== RENDER ENGINE =====================
 var currentScript = 0;
 var scrolling = false;
 var speed = 1.3;
@@ -606,40 +758,49 @@ var sc = document.getElementById('scroll-content');
 var titleBar = document.getElementById('title-bar');
 var progress = document.getElementById('progress-bar');
 
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
 function renderBody(body) {
   var html = '';
   for (var i = 0; i < body.length; i++) {
     var item = body[i];
-    if (item.t === 'line')    html += '<span style="display:block;">' + esc(item.v) + '</span>';
-    else if (item.t === 'em') html += '<span style="display:block;color:#e74c3c;font-weight:bold;">' + esc(item.v) + '</span>';
-    else if (item.t === 'breath') html += '<span style="display:block;height:28px;"></span>';
-    else if (item.t === 'section') html += '<span style="display:block;color:#f39c12;font-size:14px;font-weight:bold;letter-spacing:4px;text-transform:uppercase;margin:36px 0 6px;opacity:0.7;">' + esc(item.v) + '</span>';
-    else if (item.t === 'music') html += '<span style="display:block;color:#e74c3c;font-size:17px;font-style:italic;letter-spacing:2px;text-transform:uppercase;margin:28px 0 8px;border-left:4px solid #c0392b;padding-left:14px;">' + esc(item.v) + '</span>';
-    else if (item.t === 'pause') html += '<span style="display:block;color:#3498db;font-size:16px;font-style:italic;margin:8px 0;">' + esc(item.v) + '</span>';
-    else if (item.t === 'url')   html += '<span style="display:block;color:#8e44ad;font-size:14px;margin:6px 0;">' + esc(item.v) + '</span>';
+    switch(item.t) {
+      case 'line':
+        html += '<div style="display:block;">' + esc(item.v) + '</div>'; break;
+      case 'em':
+        html += '<div style="display:block;color:#e74c3c;font-weight:bold;">' + esc(item.v) + '</div>'; break;
+      case 'breath':
+        html += '<div style="height:30px;"></div>'; break;
+      case 'section':
+        html += '<div style="color:#f39c12;font-size:14px;font-weight:bold;letter-spacing:4px;text-transform:uppercase;margin:40px 0 8px;opacity:0.75;">' + esc(item.v) + '</div>'; break;
+      case 'music':
+        html += '<div style="color:#e74c3c;font-size:16px;font-style:italic;letter-spacing:2px;text-transform:uppercase;margin:28px 0 8px;border-left:4px solid #c0392b;padding-left:14px;">' + esc(item.v) + '</div>'; break;
+      case 'pause':
+        html += '<div style="color:#3498db;font-size:16px;font-style:italic;margin:10px 0;">' + esc(item.v) + '</div>'; break;
+    }
   }
   return html;
-}
-
-function esc(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function showScript(idx) {
   currentScript = idx;
   var s = scripts[idx];
-  var html = '<div style="text-align:center;margin-bottom:40px;">';
-  html += '<div style="color:#e74c3c;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">' + esc(s.suggested) + '</div>';
-  html += '<div style="color:#e74c3c;font-size:15px;font-style:italic;border-left:4px solid #c0392b;padding-left:14px;text-align:left;">' + esc(s.music) + '</div>';
-  html += '<div style="color:#555;font-size:13px;margin-top:8px;">' + esc(s.seo) + '</div>';
+  var html = '<div style="text-align:center;margin-bottom:50px;padding:0 5%;">';
+  html += '<div style="color:#e74c3c;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;line-height:1.6;">' + esc(s.suggested) + '</div>';
+  html += '<div style="color:#e74c3c;font-size:14px;font-style:italic;border-left:4px solid #c0392b;padding-left:14px;text-align:left;margin-bottom:8px;">' + esc(s.music) + '</div>';
+  html += '<div style="color:#444;font-size:12px;text-align:left;">' + esc(s.seo) + '</div>';
   html += '</div>';
   html += renderBody(s.body);
   sc.innerHTML = html;
   titleBar.textContent = '\uD83C\uDFAC ' + s.title + ' | ANTER';
   var btns = document.querySelectorAll('.script-btn');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].classList.toggle('active', i === idx);
-  }
+  for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', i === idx);
   resetScroll();
 }
 
@@ -647,13 +808,10 @@ function togglePlay() {
   scrolling = !scrolling;
   var btn = document.getElementById('playBtn');
   if (scrolling) {
-    btn.textContent = '\u23F8 PAUSE';
-    btn.classList.add('active');
-    lastTs = null;
-    rafId = requestAnimationFrame(animate);
+    btn.textContent = '\u23F8 PAUSE'; btn.classList.add('active');
+    lastTs = null; rafId = requestAnimationFrame(animate);
   } else {
-    btn.textContent = '\u25B6 PLAY';
-    btn.classList.remove('active');
+    btn.textContent = '\u25B6 PLAY'; btn.classList.remove('active');
     cancelAnimationFrame(rafId);
   }
 }
@@ -661,8 +819,7 @@ function togglePlay() {
 function animate(ts) {
   if (!scrolling) return;
   if (!lastTs) lastTs = ts;
-  var delta = ts - lastTs;
-  lastTs = ts;
+  var delta = ts - lastTs; lastTs = ts;
   pos += speed * delta * 0.05;
   tp.scrollTop = pos;
   updateProgress();
@@ -676,10 +833,7 @@ function animate(ts) {
 }
 
 function resetScroll() {
-  scrolling = false;
-  pos = 0;
-  tp.scrollTop = 0;
-  lastTs = null;
+  scrolling = false; pos = 0; tp.scrollTop = 0; lastTs = null;
   cancelAnimationFrame(rafId);
   document.getElementById('playBtn').textContent = '\u25B6 PLAY';
   document.getElementById('playBtn').classList.remove('active');
@@ -687,45 +841,24 @@ function resetScroll() {
 }
 
 function updateProgress() {
-  var pct = tp.scrollHeight > tp.clientHeight
-    ? (tp.scrollTop / (tp.scrollHeight - tp.clientHeight)) * 100 : 0;
+  var pct = tp.scrollHeight > tp.clientHeight ? (tp.scrollTop / (tp.scrollHeight - tp.clientHeight)) * 100 : 0;
   progress.style.width = pct + '%';
 }
 
-function updateSpeed(val) {
-  speed = parseFloat(val);
-  document.getElementById('speedVal').textContent = ' ' + speed.toFixed(1);
-}
-
-function updateFont(val) {
-  sc.style.fontSize = val + 'px';
-  document.getElementById('fontVal').textContent = ' ' + val + 'px';
-}
-
-function toggleMirror() {
-  mirrored = !mirrored;
-  sc.style.transform = mirrored ? 'scaleX(-1)' : 'scaleX(1)';
-  document.getElementById('mirrorBtn').textContent = mirrored ? '\u2194 ON' : '\u2194 MIRROR';
-}
-
-function toggleBright() {
-  bright = !bright;
-  document.body.style.background = bright ? '#111' : '#000';
-  sc.style.color = bright ? '#f5f5f5' : '#fff';
-  document.getElementById('brightBtn').textContent = bright ? '\uD83C\uDF19 DARK' : '\u2600 BRIGHT';
-}
-
+function setSpeed(val) { speed = parseFloat(val); document.getElementById('speedVal').textContent = parseFloat(val).toFixed(1); }
+function setFont(val) { sc.style.fontSize = val + 'px'; document.getElementById('fontVal').textContent = val + 'px'; }
+function toggleMirror() { mirrored = !mirrored; sc.style.transform = mirrored ? 'scaleX(-1)' : ''; document.getElementById('mirrorBtn').textContent = mirrored ? '\u2194 ON' : '\u2194 MIRROR'; }
+function toggleBright() { bright = !bright; document.body.style.background = bright ? '#111' : '#000'; document.getElementById('brightBtn').textContent = bright ? '\uD83C\uDF19 DARK' : '\u2600 BRIGHT'; }
 function nextScript() { showScript((currentScript + 1) % scripts.length); }
 function prevScript() { showScript((currentScript - 1 + scripts.length) % scripts.length); }
 
 tp.addEventListener('scroll', function() { if (!scrolling) pos = tp.scrollTop; updateProgress(); });
-
 document.addEventListener('keydown', function(e) {
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if (e.code === 'ArrowRight') nextScript();
   if (e.code === 'ArrowLeft') prevScript();
-  if (e.code === 'ArrowUp') { speed = Math.min(6, speed + 0.2); document.getElementById('speedSlider').value = speed; updateSpeed(speed); }
-  if (e.code === 'ArrowDown') { speed = Math.max(0.2, speed - 0.2); document.getElementById('speedSlider').value = speed; updateSpeed(speed); }
+  if (e.code === 'ArrowUp') { speed = Math.min(6, +(speed+0.2).toFixed(1)); document.getElementById('speedSlider').value = speed; setSpeed(speed); }
+  if (e.code === 'ArrowDown') { speed = Math.max(0.2, +(speed-0.2).toFixed(1)); document.getElementById('speedSlider').value = speed; setSpeed(speed); }
 });
 
 showScript(0);
