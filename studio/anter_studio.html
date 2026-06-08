@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ANTER Recording Studio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#c0392b;--darkred:#8e1a0e;--gold:#f39c12;--blue:#2980b9;
+  --bg:#000;--panel:#0a0a0a;--border:#222;
+}
+body{background:var(--bg);color:#fff;font-family:'Georgia',serif;overflow:hidden;height:100vh;width:100vw;}
+
+/* LAYOUT */
+#studio{display:flex;flex-direction:column;height:100vh;}
+#top-bar{
+  background:linear-gradient(90deg,#0a0a0a,#111);
+  border-bottom:2px solid var(--red);
+  padding:6px 12px;display:flex;align-items:center;gap:8px;
+  flex-wrap:wrap;z-index:100;flex-shrink:0;
+}
+#main-area{display:flex;flex:1;overflow:hidden;}
+#camera-section{flex:1;position:relative;background:#000;overflow:hidden;}
+#side-panel{
+  width:320px;background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+}
+#bottom-bar{
+  background:#0a0a0a;border-top:1px solid var(--border);
+  padding:6px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  flex-shrink:0;z-index:100;
+}
+
+/* CAMERA */
+#video-el{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transform-origin:center center;
+}
+#video-el.mirrored{transform:scaleX(-1);}
+
+/* TELEPROMPTER OVERLAY */
+#tp-overlay{
+  position:absolute;bottom:0;left:0;right:0;
+  height:45%;
+  background:linear-gradient(to bottom,transparent,rgba(0,0,0,0.92) 30%);
+  overflow:hidden;pointer-events:none;
+  transition:opacity 0.3s;
+}
+#tp-overlay.hidden{opacity:0;}
+#tp-scroll{
+  position:absolute;bottom:20px;left:0;right:0;
+  padding:0 8%;
+  font-size:28px;line-height:1.8;
+  text-align:center;
+  transition:bottom 0.05s linear;
+}
+#tp-scroll .em{color:var(--red);font-weight:bold;}
+#tp-scroll .section{
+  color:var(--gold);font-size:12px;letter-spacing:4px;
+  text-transform:uppercase;display:block;margin:20px 0 4px;
+}
+#tp-scroll .music-cue{
+  color:var(--red);font-size:13px;font-style:italic;
+  letter-spacing:1px;display:block;
+  border-left:3px solid var(--red);padding-left:10px;margin:12px 0 4px;
+}
+#tp-scroll .pause-note{
+  color:var(--blue);font-size:13px;font-style:italic;display:block;margin:6px 0;
+}
+#tp-scroll .breath{display:block;height:20px;}
+
+/* CROSSHAIR */
+#crosshair{
+  position:absolute;top:50%;left:0;right:0;
+  height:1px;background:rgba(192,57,43,0.2);pointer-events:none;
+}
+
+/* RECORD INDICATOR */
+#rec-indicator{
+  position:absolute;top:14px;left:14px;
+  background:rgba(0,0,0,0.7);border-radius:20px;
+  padding:5px 12px;font-size:12px;font-weight:bold;
+  letter-spacing:2px;display:none;align-items:center;gap:6px;
+}
+#rec-indicator.active{display:flex;}
+#rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+#rec-time{color:#fff;}
+
+/* MUSIC VIZ */
+#music-viz{
+  position:absolute;bottom:48%;left:10px;
+  display:flex;gap:3px;align-items:flex-end;height:30px;
+  opacity:0;transition:opacity 0.5s;
+}
+#music-viz.active{opacity:0.6;}
+.viz-bar{width:4px;background:var(--red);border-radius:2px;animation:vizpulse 0.8s ease-in-out infinite;}
+.viz-bar:nth-child(1){animation-delay:0s;}
+.viz-bar:nth-child(2){animation-delay:0.1s;}
+.viz-bar:nth-child(3){animation-delay:0.2s;}
+.viz-bar:nth-child(4){animation-delay:0.15s;}
+.viz-bar:nth-child(5){animation-delay:0.05s;}
+@keyframes vizpulse{
+  0%,100%{height:4px;}
+  50%{height:28px;}
+}
+
+/* BUTTONS */
+.btn{
+  background:#1a1a1a;border:1px solid #333;color:#ccc;
+  padding:6px 12px;border-radius:4px;cursor:pointer;
+  font-size:11px;font-weight:bold;letter-spacing:1px;
+  white-space:nowrap;text-transform:uppercase;
+  transition:all 0.2s;
+}
+.btn:hover{border-color:#555;color:#fff;}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff;}
+.btn.red:hover{background:var(--darkred);}
+.btn.green{background:#27ae60;border-color:#27ae60;color:#fff;}
+.btn.active{background:#27ae60;border-color:#27ae60;color:#fff;}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+/* SIDE PANEL */
+#panel-tabs{display:flex;border-bottom:1px solid var(--border);}
+.p-tab{
+  flex:1;padding:8px;text-align:center;font-size:10px;
+  font-weight:bold;letter-spacing:1px;cursor:pointer;
+  border-bottom:2px solid transparent;color:#666;
+  text-transform:uppercase;
+}
+.p-tab.active{color:var(--red);border-bottom-color:var(--red);}
+.panel-section{display:none;flex:1;overflow-y:auto;padding:10px;}
+.panel-section.active{display:flex;flex-direction:column;gap:8px;}
+
+/* SCRIPT BUTTONS */
+.script-btn{
+  background:#111;border:1px solid #222;
+  padding:8px 10px;border-radius:4px;cursor:pointer;
+  font-size:11px;color:#aaa;text-align:left;
+  transition:all 0.2s;
+}
+.script-btn:hover{border-color:#444;color:#fff;}
+.script-btn.active{background:#1a0000;border-color:var(--red);color:var(--red);}
+
+/* MUSIC TRACKS */
+.track-btn{
+  background:#111;border:1px solid #222;
+  padding:8px 10px;border-radius:4px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:all 0.2s;
+}
+.track-btn:hover{border-color:#444;}
+.track-btn.active{background:#001a00;border-color:#27ae60;}
+.track-icon{font-size:16px;}
+.track-info{flex:1;}
+.track-name{font-size:12px;font-weight:bold;color:#ddd;}
+.track-desc{font-size:10px;color:#666;margin-top:2px;}
+
+/* LABEL */
+label{color:#666;font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+input[type=range]{accent-color:var(--red);cursor:pointer;width:100%;}
+.slider-row{display:flex;flex-direction:column;gap:4px;}
+.slider-val{color:#aaa;font-size:11px;text-align:right;}
+
+/* STATUS BAR */
+#status{color:#666;font-size:10px;letter-spacing:1px;margin-left:auto;}
+#storage-note{
+  background:#111;border:1px solid #333;border-radius:4px;
+  padding:6px 10px;font-size:10px;color:#666;
+  margin-top:auto;flex-shrink:0;
+}
+
+/* FULLSCREEN */
+#studio.fullscreen #side-panel{display:none;}
+#studio.fullscreen #top-bar{display:none;}
+#studio.fullscreen #bottom-bar{display:none;}
+#studio.fullscreen #tp-overlay{height:50%;}
+#studio.fullscreen #tp-scroll{font-size:34px;}
+
+/* TITLE OVERLAY */
+#title-overlay{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.7);border:1px solid var(--red);
+  border-radius:20px;padding:4px 16px;
+  font-size:10px;font-weight:bold;letter-spacing:2px;
+  color:var(--red);text-transform:uppercase;pointer-events:none;
+  white-space:nowrap;
+}
+
+/* COUNTDOWN */
+#countdown{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:120px;font-weight:bold;color:var(--red);
+  text-shadow:0 0 40px rgba(192,57,43,0.8);
+  display:none;pointer-events:none;
+  animation:countpop 1s ease-out;
+}
+@keyframes countpop{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0;}
+  30%{opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:0;}}
+</style>
+</head>
+<body>
+<div id="studio">
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div style="color:var(--red);font-weight:bold;font-size:13px;letter-spacing:2px;margin-right:4px;">🎬 ANTER STUDIO</div>
+  <button class="btn red" id="recBtn" onclick="toggleRecord()">⏺ REC</button>
+  <button class="btn" id="camBtn" onclick="toggleCamera()">📷 FRONT</button>
+  <button class="btn" id="mirrorBtn" onclick="toggleMirror()">⇆ MIRROR</button>
+  <button class="btn" id="tpBtn" onclick="toggleTeleprompter()" style="background:#1a1a00;border-color:#555;">📜 PROMPTER</button>
+  <button class="btn" id="playBtn" onclick="toggleScroll()">▶ SCROLL</button>
+  <button class="btn blue" onclick="startCountdown()">3… REC</button>
+  <button class="btn" onclick="toggleFullscreen()">⛶ FULL</button>
+  <div id="status">CAMERA OFF</div>
+</div>
+
+<!-- MAIN -->
+<div id="main-area">
+
+  <!-- CAMERA -->
+  <div id="camera-section">
+    <video id="video-el" autoplay muted playsinline></video>
+    <div id="title-overlay">ANTER — TYLER ANTER</div>
+    <div id="crosshair"></div>
+    <div id="rec-indicator">
+      <div id="rec-dot"></div>
+      <span id="rec-time">00:00</span>
+    </div>
+    <div id="music-viz">
+      <div class="viz-bar"></div><div class="viz-bar"></div>
+      <div class="viz-bar"></div><div class="viz-bar"></div>
+      <div class="viz-bar"></div>
+    </div>
+    <div id="tp-overlay">
+      <div id="tp-scroll"></div>
+    </div>
+    <div id="countdown"></div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div id="side-panel">
+    <div id="panel-tabs">
+      <div class="p-tab active" onclick="showTab('scripts')">SCRIPTS</div>
+      <div class="p-tab" onclick="showTab('music')">MUSIC</div>
+      <div class="p-tab" onclick="showTab('settings')">SETUP</div>
+    </div>
+
+    <!-- SCRIPTS TAB -->
+    <div class="panel-section active" id="tab-scripts">
+      <label>SELECT SCRIPT</label>
+      <button class="script-btn active" onclick="loadScript(0)">1 · THEY SENT HER TO DESTROY ME</button>
+      <button class="script-btn" onclick="loadScript(1)">2 · THEY BRAINWASHED THE PEOPLE I LOVE</button>
+      <button class="script-btn" onclick="loadScript(2)">3 · I DO NOT CONSENT</button>
+      <button class="script-btn" onclick="loadScript(3)">4 · WHAT THEY'RE DOING BEHIND THE SCENES</button>
+      <button class="script-btn" onclick="loadScript(4)">5 · PATIENCE OF AN EMPATH AT WAR</button>
+      <button class="script-btn" onclick="loadScript(5)">6 · HOOKED ON THE FLESH</button>
+      <button class="script-btn" onclick="loadScript(6)">7 · WE ARE AWAKE AND WE ARE COMING</button>
+      <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+      <div class="slider-row">
+        <label>SCROLL SPEED <span class="slider-val" id="spdVal">1.3</span></label>
+        <input type="range" id="spdSlider" min="0.2" max="6" step="0.1" value="1.3" oninput="setScrollSpeed(this.value)">
+      </div>
+      <div class="slider-row">
+        <label>FONT SIZE <span class="slider-val" id="fntVal">28px</span></label>
+        <input type="range" id="fntSlider" min="14" max="60" step="2" value="28" oninput="setFont(this.value)">
+      </div>
+    </div>
+
+    <!-- MUSIC TAB -->
+    <div class="panel-section" id="tab-music">
+      <label>BACKGROUND MUSIC</label>
+      <div class="track-btn active" id="track-0" onclick="playTrack(0)">
+        <span class="track-icon">🔴</span>
+        <div class="track-info">
+          <div class="track-name">DARK TENSION</div>
+          <div class="track-desc">Heavy ambient drone — pure weight</div>
+        </div>
+      </div>
+      <div class="track-btn" id="track-1" onclick="playTrack(1)">
+        <span class="track-icon">🟠</span>
+        <div class="track-info">
+          <div class="track-name">WAR DRUMS</div>
+          <div class="track-desc">Slow percussive build — rising resolve</div>
+        </div>
+      </div>
+      <div class="track-btn" id="track-2" onclick="playTrack(2)">
+        <span class="track-icon">🟡</span>
+        <div class="track-info">
+          <div class="track-name">DARK PIANO</div>
+          <div class="track-desc">Deliberate weighted keys — revelation</div>
+        </div>
+      </div>
+      <div class="track-btn" id="track-3" onclick="playTrack(3)">
+        <span class="track-icon">🟣</span>
+        <div class="track-info">
+          <div class="track-name">EPIC ORCHESTRAL</div>
+          <div class="track-desc">Full cinematic swell — chosen one energy</div>
+        </div>
+      </div>
+      <div class="track-btn" id="track-4" onclick="playTrack(4)">
+        <span class="track-icon">⚫</span>
+        <div class="track-info">
+          <div class="track-name">HAUNTING SILENCE</div>
+          <div class="track-desc">Single note loop — classified footage vibe</div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+      <div class="slider-row">
+        <label>MUSIC VOLUME <span class="slider-val" id="volVal">40%</span></label>
+        <input type="range" id="volSlider" min="0" max="100" value="40" oninput="setVolume(this.value)">
+      </div>
+      <button class="btn" onclick="stopMusic()" style="margin-top:4px;">⏹ STOP MUSIC</button>
+      <div id="storage-note">
+        🎵 <strong>To use your own music:</strong> Download any royalty-free dark ambient track as MP3, then click "Load Custom Track" below and select it from your device.
+        <br><br>
+        <button class="btn blue" onclick="document.getElementById('customAudio').click()" style="width:100%;margin-top:4px;">📂 LOAD CUSTOM TRACK</button>
+        <input type="file" id="customAudio" accept="audio/*" style="display:none" onchange="loadCustomTrack(this)">
+        <div id="customTrackName" style="margin-top:4px;font-size:10px;color:#666;"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="panel-section" id="tab-settings">
+      <label>CAMERA</label>
+      <button class="btn" onclick="startCamera('user')" style="width:100%;margin-bottom:4px;">📷 FRONT CAMERA</button>
+      <button class="btn" onclick="startCamera('environment')" style="width:100%;margin-bottom:8px;">📷 REAR CAMERA</button>
+      <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+      <label>RECORDING FORMAT</label>
+      <select id="qualitySelect" style="background:#111;border:1px solid #333;color:#aaa;padding:6px;border-radius:4px;width:100%;font-size:11px;">
+        <option value="1080">1080p (Best Quality)</option>
+        <option value="720" selected>720p (Recommended)</option>
+        <option value="480">480p (Fast)</option>
+      </select>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <label>TELEPROMPTER POSITION</label>
+      <button class="btn" onclick="setTPPos('bottom')" style="width:100%;margin-bottom:4px;">⬇ BOTTOM (Default)</button>
+      <button class="btn" onclick="setTPPos('top')" style="width:100%;margin-bottom:4px;">⬆ TOP</button>
+      <button class="btn" onclick="setTPPos('full')" style="width:100%;">↕ FULL OVERLAY</button>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <label>TITLE CARD TEXT</label>
+      <input type="text" id="titleInput" value="ANTER — TYLER ANTER" style="background:#111;border:1px solid #333;color:#aaa;padding:6px;border-radius:4px;width:100%;font-size:11px;" oninput="updateTitle(this.value)">
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <div class="slider-row">
+        <label>TELEPROMPTER OPACITY <span class="slider-val" id="opVal">90%</span></label>
+        <input type="range" id="opSlider" min="10" max="100" value="90" oninput="setTPOpacity(this.value)">
+      </div>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <button class="btn" onclick="downloadLastRecording()" style="width:100%;background:#1a0a00;border-color:var(--gold);color:var(--gold);">💾 DOWNLOAD LAST RECORDING</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+  <button class="btn" onclick="loadScript((currentScript-1+7)%7)">◀ PREV</button>
+  <button class="btn" onclick="loadScript((currentScript+1)%7)">NEXT ▶</button>
+  <div style="flex:1;background:#111;border-radius:4px;height:6px;overflow:hidden;">
+    <div id="tp-progress" style="height:100%;width:0%;background:var(--red);transition:width 0.1s;"></div>
+  </div>
+  <div id="script-title" style="font-size:10px;color:#666;letter-spacing:1px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">SCRIPT 1 — THEY SENT HER TO DESTROY ME</div>
+</div>
+
+</div><!-- /studio -->
+
+<audio id="bg-audio" loop style="display:none;"></audio>
+
+<script>
+
+var scripts = [
+{
+  title:"SCRIPT 1 — THEY SENT HER TO DESTROY ME",
+  body:[
+    {t:"section",v:"— COLD OPEN —"},
+    {t:"line",v:"I was watching a video."},
+    {t:"line",v:"Joker motivation. Dark truth."},
+    {t:"line",v:"The kind of content most people scroll past"},
+    {t:"line",v:"because it hits too close."},
+    {t:"breath"},{t:"line",v:"And the topic was this:"},
+    {t:"breath"},{t:"em",v:"They send in a twin flame to destroy you."},
+    {t:"breath"},
+    {t:"pause",v:"[Hold. Let that land.]"},
+    {t:"breath"},
+    {t:"line",v:"Someone who arrives like an answer to a prayer."},
+    {t:"line",v:"Perfect timing. Perfect energy. Perfect fit."},
+    {t:"line",v:"For one month — pure light."},
+    {t:"line",v:"And then."},
+    {t:"breath"},
+    {t:"em",v:"They activated her."},
+    {t:"music",v:"🎵 MUSIC BUILD: Bass pulse — like a heartbeat that knows something is wrong."},
+    {t:"section",v:"— WHO I AM —"},
+    {t:"line",v:"I am an empath."},
+    {t:"line",v:"Not the social media kind."},
+    {t:"line",v:"I mean I feel what people carry before they say a word."},
+    {t:"line",v:"I feel the pain they haven't admitted yet."},
+    {t:"line",v:"The wound driving the behavior."},
+    {t:"breath"},
+    {t:"em",v:"I feel all of it."},
+    {t:"breath"},
+    {t:"line",v:"And that is exactly why I was chosen as a target."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Low strings. Dark and slow. Something being revealed."},
+    {t:"section",v:"— THE WEAPON THEY SENT —"},
+    {t:"line",v:"She came in like a miracle."},
+    {t:"line",v:"I have shown her more patience than most men carry in a lifetime."},
+    {t:"line",v:"I have loved her unconditionally."},
+    {t:"line",v:"I have forgiven things that would have broken anyone else."},
+    {t:"breath"},
+    {t:"em",v:"But I have had enough."},
+    {t:"breath"},
+    {t:"pause",v:"[Direct. Calm. Not rage — resolution.]"},
+    {t:"breath"},
+    {t:"line",v:"Not enough of her."},
+    {t:"em",v:"Enough of THEM."},
+    {t:"music",v:"🎵 MUSIC PEAK: Full orchestral dark swell. Let it breathe 4 seconds."},
+    {t:"section",v:"— WHAT THEY ARE DOING —"},
+    {t:"line",v:"They keep us weak."},
+    {t:"line",v:"They keep us preoccupied."},
+    {t:"line",v:"Distracted from what they are doing behind the scenes."},
+    {t:"breath"},
+    {t:"line",v:"They are passing laws."},
+    {t:"line",v:"They are signing bills."},
+    {t:"em",v:"And in the small print nobody reads —"},
+    {t:"line",v:"are the permissions."},
+    {t:"breath"},
+    {t:"line",v:"The permission to experiment on the public without consent."},
+    {t:"line",v:"That law was passed over twenty years ago."},
+    {t:"em",v:"Look it up. MK Ultra. Research it yourself."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Haunting single note. Like a bell that never stops ringing."},
+    {t:"section",v:"— MY DECLARATION —"},
+    {t:"em",v:"I do not consent."},
+    {t:"breath"},
+    {t:"pause",v:"[Three words. Firm. Clear. Say them again if you need to.]"},
+    {t:"breath"},
+    {t:"line",v:"She could have been my everything."},
+    {t:"line",v:"I know exactly how to make her happy."},
+    {t:"line",v:"But that path would cost me my mission."},
+    {t:"breath"},
+    {t:"em",v:"And I will not become that."},
+    {t:"breath"},
+    {t:"line",v:"Not for comfort."},
+    {t:"line",v:"Not for love."},
+    {t:"em",v:"Not for anything."},
+    {t:"music",v:"🎵 MUSIC OUT: Full swell then sudden silence."},
+    {t:"section",v:"— THE TRUTH —"},
+    {t:"line",v:"I am an empath who sees the war."},
+    {t:"line",v:"I am a vessel who refuses to be weaponized."},
+    {t:"line",v:"Eyes open. Mission intact."},
+    {t:"breath"},
+    {t:"em",v:"Unbroken."},
+    {t:"pause",v:"[Hold camera. 5 seconds. Cut.]"}
+  ]
+},
+{
+  title:"SCRIPT 2 — THEY BRAINWASHED THE PEOPLE I LOVE",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"You want to know how they really get to someone like me?"},
+    {t:"breath"},
+    {t:"line",v:"They don't come at me directly. They can't."},
+    {t:"line",v:"Because I see that coming."},
+    {t:"breath"},
+    {t:"em",v:"They come for the people I love."},
+    {t:"music",v:"🎵 MUSIC BUILD: Bass enters. Low and slow."},
+    {t:"section",v:"— THE STRATEGY —"},
+    {t:"line",v:"They take the ones closest to you."},
+    {t:"line",v:"And they fill them with just enough noise"},
+    {t:"line",v:"that they can't hear what you're trying to tell them."},
+    {t:"breath"},
+    {t:"line",v:"I try to share the truth."},
+    {t:"line",v:"The laws being passed."},
+    {t:"line",v:"The bills being signed."},
+    {t:"em",v:"The small print that gives them permission to do exactly this to us."},
+    {t:"breath"},
+    {t:"em",v:"And the people I love can't see it."},
+    {t:"breath"},
+    {t:"line",v:"Not because they're stupid."},
+    {t:"em",v:"Because they've been targeted. Deliberately kept weak, preoccupied, distracted."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Strings enter. Dark and heavy."},
+    {t:"section",v:"— THE SYSTEM —"},
+    {t:"line",v:"Keep people fighting each other so they never look up."},
+    {t:"line",v:"Keep people chasing survival so they never ask who designed this and why."},
+    {t:"line",v:"Poison the food. Cloud the mind."},
+    {t:"em",v:"And if someone wakes up anyway — send in a twin flame to bring them back down."},
+    {t:"music",v:"🎵 MUSIC PEAK: Full orchestral. Hold 3 seconds."},
+    {t:"section",v:"— WHAT I CHOOSE —"},
+    {t:"line",v:"So what do I do with this?"},
+    {t:"breath"},
+    {t:"line",v:"I don't abandon them."},
+    {t:"line",v:"I don't stop loving them."},
+    {t:"breath"},
+    {t:"line",v:"Because they are not my enemy."},
+    {t:"em",v:"The system is my enemy."},
+    {t:"breath"},
+    {t:"line",v:"And the most powerful thing I can do is stay on mission."},
+    {t:"line",v:"Keep speaking truth."},
+    {t:"line",v:"Keep being the light they can't corrupt."},
+    {t:"breath"},
+    {t:"em",v:"Because eventually — people wake up."},
+    {t:"line",v:"And I'll be here when they do."},
+    {t:"music",v:"🎵 MUSIC OUT: Fade slowly. End in silence."},
+    {t:"pause",v:"[Hold camera 4 seconds. Cut.]"}
+  ]
+},
+{
+  title:"SCRIPT 3 — I DO NOT CONSENT",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"Three words."},
+    {t:"line",v:"That's all it takes."},
+    {t:"breath"},
+    {t:"em",v:"I do not consent."},
+    {t:"breath"},
+    {t:"pause",v:"[Say it again. Slower. Like a declaration before God.]"},
+    {t:"em",v:"I. Do. Not. Consent."},
+    {t:"music",v:"🎵 MUSIC BUILD: Bass drum. Single hit. Then silence. Then it begins."},
+    {t:"section",v:"— WHAT I'M SAYING NO TO —"},
+    {t:"line",v:"I do not consent to being experimented on."},
+    {t:"line",v:"And that is not paranoia — that is legal record."},
+    {t:"em",v:"MK Ultra. Go research it."},
+    {t:"breath"},
+    {t:"line",v:"I do not consent to food legally cleared to poison me slowly."},
+    {t:"em",v:"Chemicals designed to keep me foggy, compliant, manageable."},
+    {t:"breath"},
+    {t:"line",v:"I do not consent to laws passed in the small print"},
+    {t:"line",v:"while they keep us arguing over things designed to divide us."},
+    {t:"breath"},
+    {t:"em",v:"I do not consent to any of it."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Full orchestra. Resolute. Like a march."},
+    {t:"section",v:"— WHAT THIS COSTS —"},
+    {t:"line",v:"Non-consent costs something. I want you to know that."},
+    {t:"line",v:"It costs the comfortable love that required me to look away."},
+    {t:"line",v:"It costs relationships with people still inside the system."},
+    {t:"breath"},
+    {t:"line",v:"She was everything they designed her to be."},
+    {t:"em",v:"But it would have cost me my mission."},
+    {t:"breath"},
+    {t:"em",v:"And I will not pay that price."},
+    {t:"music",v:"🎵 MUSIC PEAK: Maximum swell. Hold 4 seconds. Then pull back to piano alone."},
+    {t:"section",v:"— THE DECLARATION STANDS —"},
+    {t:"line",v:"I am still here. Still awake. Still carrying the mission."},
+    {t:"breath"},
+    {t:"em",v:"I do not consent."},
+    {t:"line",v:"And I never will."},
+    {t:"music",v:"🎵 MUSIC OUT: Slow fade to complete silence over 10 seconds."},
+    {t:"pause",v:"[Hold camera 5 seconds. No words. Cut to black.]"}
+  ]
+},
+{
+  title:"SCRIPT 4 — WHAT THEY'RE DOING BEHIND THE SCENES",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"I need to tell you something most people aren't ready to hear."},
+    {t:"breath"},
+    {t:"em",v:"Not because it's complicated. Because they've trained us to look away."},
+    {t:"music",v:"🎵 MUSIC BUILD: Percussion enters. Slow. Methodical."},
+    {t:"section",v:"— THE DISTRACTION MACHINE —"},
+    {t:"line",v:"Think about what you were focused on today."},
+    {t:"line",v:"The news cycle that made you angry."},
+    {t:"line",v:"The relationship drama that exhausted you."},
+    {t:"breath"},
+    {t:"em",v:"Now ask yourself — who benefits from you being exactly that occupied?"},
+    {t:"breath"},
+    {t:"line",v:"Because while you were distracted — bills got signed."},
+    {t:"line",v:"Laws got passed."},
+    {t:"em",v:"And in the small print — permissions were granted."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Darker. More urgent."},
+    {t:"section",v:"— WHAT'S IN THE SMALL PRINT —"},
+    {t:"line",v:"The permission to experiment on the public."},
+    {t:"em",v:"Without consent. Without disclosure. Without consequence."},
+    {t:"breath"},
+    {t:"line",v:"That law is not a conspiracy theory."},
+    {t:"line",v:"It was passed over twenty years ago."},
+    {t:"em",v:"MK Ultra is documented history. Research it yourself."},
+    {t:"breath"},
+    {t:"line",v:"The permission to sell you food with chemicals that cloud your mind."},
+    {t:"em",v:"Legal. Approved. Ongoing."},
+    {t:"music",v:"🎵 MUSIC PEAK: Full orchestral truth moment. Hold 4 seconds."},
+    {t:"section",v:"— I SEE IT —"},
+    {t:"line",v:"I see all of it."},
+    {t:"line",v:"Because I refused to stay asleep."},
+    {t:"line",v:"Because God gave me eyes that see past what they designed me to see."},
+    {t:"breath"},
+    {t:"em",v:"And the most revolutionary thing you can do right now is open your eyes."},
+    {t:"music",v:"🎵 MUSIC OUT: Abrupt cut to silence."},
+    {t:"pause",v:"[Hard cut. No fade. Let the silence be the final statement.]"}
+  ]
+},
+{
+  title:"SCRIPT 5 — PATIENCE OF AN EMPATH AT WAR",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"I want to talk about patience."},
+    {t:"breath"},
+    {t:"line",v:"Not the kind people quote."},
+    {t:"em",v:"The real kind. The kind that costs you. The kind that almost breaks you."},
+    {t:"music",v:"🎵 MUSIC BUILD: Low bass enters. Slow. Heavy."},
+    {t:"section",v:"— WHAT I HAVE ENDURED —"},
+    {t:"line",v:"I am an empath."},
+    {t:"em",v:"Which means I don't just see pain — I absorb it."},
+    {t:"breath"},
+    {t:"line",v:"I felt her confusion as if it were my own."},
+    {t:"line",v:"I felt the programming underneath the behavior."},
+    {t:"breath"},
+    {t:"line",v:"And I stayed. And I forgave. Again. And again. And again."},
+    {t:"em",v:"In conditions that would have made most men walk away and never look back."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Tension tightens. Strings enter low."},
+    {t:"section",v:"— THE LINE —"},
+    {t:"line",v:"Patience is not passivity."},
+    {t:"em",v:"Patience is not endless tolerance of a system actively destroying everything you're building."},
+    {t:"breath"},
+    {t:"em",v:"I have had enough of their manipulation."},
+    {t:"breath"},
+    {t:"line",v:"Enough of watching the people I call family be turned against the truth."},
+    {t:"line",v:"Enough of being the only one who sees while everyone around me is kept deliberately blind."},
+    {t:"music",v:"🎵 MUSIC PEAK: Full swell. Orchestral. Resolute."},
+    {t:"section",v:"— WHAT PATIENCE TAUGHT ME —"},
+    {t:"line",v:"My patience was not wasted."},
+    {t:"line",v:"Every moment I chose love over reaction was a deposit into something they cannot take."},
+    {t:"breath"},
+    {t:"line",v:"My character. My integrity."},
+    {t:"em",v:"My clarity about who I am and what I refuse to become."},
+    {t:"breath"},
+    {t:"line",v:"Refined by patience. Sharpened by warfare. Rooted in God."},
+    {t:"em",v:"Still standing."},
+    {t:"music",v:"🎵 MUSIC OUT: Slow powerful fade. Let the weight linger."},
+    {t:"pause",v:"[Hold 4 seconds. Slow cut to black.]"}
+  ]
+},
+{
+  title:"SCRIPT 6 — HOOKED ON THE FLESH",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"She was perfection."},
+    {t:"breath"},
+    {t:"line",v:"For the first month — she was everything I had ever prayed for."},
+    {t:"line",v:"Fully supportive. Fully present."},
+    {t:"line",v:"Like God had finally answered."},
+    {t:"breath"},
+    {t:"line",v:"And then they activated her."},
+    {t:"breath"},
+    {t:"em",v:"And the angel became the destroyer."},
+    {t:"music",v:"🎵 MUSIC BUILD: The piano darkens. Bass enters beneath it."},
+    {t:"section",v:"— WHAT THEY TURNED HER INTO —"},
+    {t:"line",v:"Hooked on the flesh."},
+    {t:"line",v:"Pulled away from everything good that was growing between us."},
+    {t:"breath"},
+    {t:"line",v:"I'm an empath — I felt the moment the switch happened."},
+    {t:"line",v:"She is not her behavior. She is not what they made her."},
+    {t:"em",v:"But what they made her has consequences."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Dark orchestral tension. Rising slow."},
+    {t:"section",v:"— THE CHOICE —"},
+    {t:"line",v:"I could make her happy. I know exactly how."},
+    {t:"breath"},
+    {t:"line",v:"But that path has a toll."},
+    {t:"em",v:"And that toll is me. My mission. The man I've fought so hard to remain."},
+    {t:"breath"},
+    {t:"em",v:"And I will not pay that price."},
+    {t:"breath"},
+    {t:"line",v:"Real love is not becoming the darkness to keep someone comfortable inside it."},
+    {t:"em",v:"Real love sometimes means refusing to go down with someone."},
+    {t:"music",v:"🎵 MUSIC PEAK: Full swell. Then sudden pull back to piano alone."},
+    {t:"section",v:"— WHAT REMAINS —"},
+    {t:"line",v:"She was the most beautiful thing they ever sent at me."},
+    {t:"breath"},
+    {t:"em",v:"And I survived her."},
+    {t:"breath"},
+    {t:"line",v:"Not cold. Not bitter. Not hardened."},
+    {t:"em",v:"Still open. Still loving. Still on mission."},
+    {t:"music",v:"🎵 MUSIC OUT: Piano fades alone. Slow. Sorrowful but resolved."},
+    {t:"pause",v:"[No words after. Just hold. Then cut.]"}
+  ]
+},
+{
+  title:"SCRIPT 7 — WE ARE AWAKE AND WE ARE COMING",
+  body:[
+    {t:"section",v:"— OPEN —"},
+    {t:"line",v:"I want to speak directly to the system now."},
+    {t:"breath"},
+    {t:"pause",v:"[Look into the camera like you're looking through it. Like you know they're watching.]"},
+    {t:"breath"},
+    {t:"em",v:"You made a mistake."},
+    {t:"breath"},
+    {t:"line",v:"You targeted someone who feels the machinery."},
+    {t:"line",v:"Who woke up from your programming and refused to go back to sleep."},
+    {t:"music",v:"🎵 MUSIC BUILD: War drums enter. Slow. Purposeful. Rising."},
+    {t:"section",v:"— WHAT I NOW KNOW —"},
+    {t:"line",v:"I know about the twin flame strategy."},
+    {t:"line",v:"I know about the small print laws."},
+    {t:"em",v:"I know about MK Ultra and what was permitted in its wake."},
+    {t:"line",v:"I know about the food. The chemicals. The deliberate clouding of the public mind."},
+    {t:"breath"},
+    {t:"em",v:"And I am still here."},
+    {t:"music",v:"🎵 MUSIC SHIFT: Full orchestra. Building to something massive."},
+    {t:"section",v:"— WHAT WE ARE —"},
+    {t:"line",v:"I am an empath who has been to war and came back carrying truth instead of trauma."},
+    {t:"line",v:"I am a vessel of God who refused to be turned against my own mission."},
+    {t:"em",v:"I am a man who loved unconditionally through war — and did not break."},
+    {t:"music",v:"🎵 MUSIC PEAK: Maximum cinematic power. Hold 5 full seconds."},
+    {t:"section",v:"— THE MESSAGE —"},
+    {t:"line",v:"To everyone watching this who feels it too —"},
+    {t:"breath"},
+    {t:"line",v:"You are not paranoid. You are not broken. You are not alone."},
+    {t:"breath"},
+    {t:"em",v:"You are awake."},
+    {t:"breath"},
+    {t:"line",v:"Stay rooted. Stay on mission."},
+    {t:"line",v:"Do not consent. Do not become what they need you to be."},
+    {t:"breath"},
+    {t:"em",v:"We see everything now."},
+    {t:"breath"},
+    {t:"em",v:"And we are just getting started."},
+    {t:"music",v:"🎵 MUSIC OUT: Full swell then complete silence. Instant cut."},
+    {t:"pause",v:"[Hold camera. Eyes forward. 5 seconds. Cut to black.]"}
+  ]
+}
+];
+
+
+// Free royalty-free dark ambient tracks (Internet Archive / public domain)
+var musicTracks = [
+  {
+    name:"DARK TENSION",
+    url:"https://ia800107.us.archive.org/1/items/Dark_Ambient_-_Public_Domain/Dark_Ambient_1.mp3"
+  },
+  {
+    name:"WAR DRUMS",
+    url:"https://ia800107.us.archive.org/1/items/Dark_Ambient_-_Public_Domain/Dark_Ambient_2.mp3"
+  },
+  {
+    name:"DARK PIANO",
+    url:"https://ia800107.us.archive.org/1/items/Dark_Ambient_-_Public_Domain/Dark_Ambient_3.mp3"
+  },
+  {
+    name:"EPIC ORCHESTRAL",
+    url:"https://ia800107.us.archive.org/1/items/Dark_Ambient_-_Public_Domain/Dark_Ambient_4.mp3"
+  },
+  {
+    name:"HAUNTING SILENCE",
+    url:"https://ia800107.us.archive.org/1/items/Dark_Ambient_-_Public_Domain/Dark_Ambient_5.mp3"
+  }
+];
+
+// --- STATE ---
+var currentScript = 0;
+var scrolling = false;
+var scrollSpeed = 1.3;
+var scrollPos = 0;
+var rafId = null;
+var lastTs = null;
+var mirrored = false;
+var stream = null;
+var mediaRecorder = null;
+var recordedChunks = [];
+var recSeconds = 0;
+var recTimer = null;
+var currentTrack = 0;
+var isRecording = false;
+var lastBlob = null;
+var tpVisible = true;
+
+// --- ELEMENTS ---
+var video = document.getElementById('video-el');
+var tpOverlay = document.getElementById('tp-overlay');
+var tpScroll = document.getElementById('tp-scroll');
+var tpProgress = document.getElementById('tp-progress');
+var bgAudio = document.getElementById('bg-audio');
+var recIndicator = document.getElementById('rec-indicator');
+var recTimeEl = document.getElementById('rec-time');
+var musicViz = document.getElementById('music-viz');
+var statusEl = document.getElementById('status');
+var scriptTitleEl = document.getElementById('script-title');
+
+// --- CAMERA ---
+async function startCamera(facing) {
+  facing = facing || 'user';
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+  var q = document.getElementById('qualitySelect').value;
+  var h = q==='1080'?1080:q==='720'?720:480;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:facing, width:{ideal:1920}, height:{ideal:h}},
+      audio:true
+    });
+    video.srcObject = stream;
+    statusEl.textContent = 'CAMERA LIVE';
+    document.getElementById('camBtn').textContent = facing==='user'?'📷 FRONT':'📷 REAR';
+  } catch(e) {
+    statusEl.textContent = 'CAM ERROR: '+e.message;
+  }
+}
+
+function toggleCamera(){
+  var btn = document.getElementById('camBtn');
+  var facing = btn.textContent.includes('FRONT') ? 'environment' : 'user';
+  startCamera(facing);
+}
+
+function toggleMirror(){
+  mirrored = !mirrored;
+  video.classList.toggle('mirrored', mirrored);
+  document.getElementById('mirrorBtn').style.background = mirrored ? '#1a3a00' : '';
+}
+
+// --- RECORDING ---
+function toggleRecord(){
+  if(isRecording){ stopRecord(); }
+  else { startRecord(); }
+}
+
+function startRecord(){
+  if(!stream){ alert('Start your camera first!'); return; }
+  recordedChunks = [];
+  var opts = {mimeType:'video/webm;codecs=vp9,opus'};
+  if(!MediaRecorder.isTypeSupported(opts.mimeType)) opts = {mimeType:'video/webm'};
+
+  // Mix camera + music into canvas for recording if needed
+  mediaRecorder = new MediaRecorder(stream, opts);
+  mediaRecorder.ondataavailable = function(e){ if(e.data.size>0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = function(){
+    lastBlob = new Blob(recordedChunks,{type:'video/webm'});
+    autoDownload(lastBlob);
+  };
+  mediaRecorder.start(1000);
+  isRecording = true;
+  recSeconds = 0;
+  recIndicator.classList.add('active');
+  document.getElementById('recBtn').textContent = '⏹ STOP';
+  document.getElementById('recBtn').classList.add('green');
+  document.getElementById('recBtn').classList.remove('red');
+  recTimer = setInterval(function(){
+    recSeconds++;
+    var m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+    var s = String(recSeconds%60).padStart(2,'0');
+    recTimeEl.textContent = m+':'+s;
+  },1000);
+}
+
+function stopRecord(){
+  if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  isRecording = false;
+  clearInterval(recTimer);
+  recIndicator.classList.remove('active');
+  document.getElementById('recBtn').textContent = '⏺ REC';
+  document.getElementById('recBtn').classList.remove('green');
+  document.getElementById('recBtn').classList.add('red');
+}
+
+function autoDownload(blob){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var title = scripts[currentScript].title.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.href = url; a.download = 'anter_'+title+'_'+Date.now()+'.webm';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 10000);
+}
+
+function downloadLastRecording(){
+  if(lastBlob){ autoDownload(lastBlob); }
+  else { alert('No recording yet — press REC to start!'); }
+}
+
+// --- TELEPROMPTER ---
+function loadScript(idx){
+  currentScript = idx;
+  var s = scripts[idx];
+  var html = '';
+  s.body.forEach(function(item){
+    switch(item.t){
+      case 'line': html+='<div>'+esc(item.v)+'</div>'; break;
+      case 'em': html+='<div class="em">'+esc(item.v)+'</div>'; break;
+      case 'breath': html+='<div class="breath"></div>'; break;
+      case 'section': html+='<span class="section">'+esc(item.v)+'</span>'; break;
+      case 'music': html+='<span class="music-cue">'+esc(item.v)+'</span>'; break;
+      case 'pause': html+='<span class="pause-note">'+esc(item.v)+'</span>'; break;
+    }
+  });
+  tpScroll.innerHTML = html;
+  scriptTitleEl.textContent = s.title;
+  resetScroll();
+  // update script buttons
+  document.querySelectorAll('.script-btn').forEach(function(b,i){
+    b.classList.toggle('active', i===idx);
+  });
+}
+
+function toggleTeleprompter(){
+  tpVisible = !tpVisible;
+  tpOverlay.classList.toggle('hidden', !tpVisible);
+  var btn = document.getElementById('tpBtn');
+  btn.style.background = tpVisible ? '#1a1a00' : '#111';
+}
+
+function toggleScroll(){
+  scrolling = !scrolling;
+  var btn = document.getElementById('playBtn');
+  if(scrolling){
+    btn.textContent='⏸ PAUSE'; btn.classList.add('active');
+    lastTs=null; rafId=requestAnimationFrame(animateScroll);
+  } else {
+    btn.textContent='▶ SCROLL'; btn.classList.remove('active');
+    cancelAnimationFrame(rafId);
+  }
+}
+
+function animateScroll(ts){
+  if(!scrolling) return;
+  if(!lastTs) lastTs=ts;
+  var delta=ts-lastTs; lastTs=ts;
+  // scroll the tp-scroll element upward
+  scrollPos += scrollSpeed * delta * 0.04;
+  tpScroll.style.bottom = scrollPos+'px';
+  // progress
+  var maxScroll = tpScroll.offsetHeight;
+  var pct = Math.min(100,(scrollPos/maxScroll)*100);
+  tpProgress.style.width = pct+'%';
+  if(scrollPos > maxScroll+100){
+    scrolling=false;
+    document.getElementById('playBtn').textContent='▶ SCROLL';
+    document.getElementById('playBtn').classList.remove('active');
+    return;
+  }
+  rafId = requestAnimationFrame(animateScroll);
+}
+
+function resetScroll(){
+  scrolling=false; scrollPos=0;
+  tpScroll.style.bottom='20px';
+  tpProgress.style.width='0%';
+  lastTs=null; cancelAnimationFrame(rafId);
+  document.getElementById('playBtn').textContent='▶ SCROLL';
+  document.getElementById('playBtn').classList.remove('active');
+}
+
+function setScrollSpeed(v){ scrollSpeed=parseFloat(v); document.getElementById('spdVal').textContent=parseFloat(v).toFixed(1); }
+function setFont(v){ tpScroll.style.fontSize=v+'px'; document.getElementById('fntVal').textContent=v+'px'; }
+function setTPOpacity(v){ tpOverlay.style.background='linear-gradient(to bottom,transparent,rgba(0,0,0,'+v/100+') 30%)'; document.getElementById('opVal').textContent=v+'%'; }
+function setTPPos(pos){
+  if(pos==='bottom'){ tpOverlay.style.top='auto'; tpOverlay.style.bottom='0'; tpOverlay.style.height='45%'; }
+  if(pos==='top'){ tpOverlay.style.bottom='auto'; tpOverlay.style.top='130px'; tpOverlay.style.height='45%'; }
+  if(pos==='full'){ tpOverlay.style.top='130px'; tpOverlay.style.bottom='0'; tpOverlay.style.height='auto'; }
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// --- MUSIC ---
+function playTrack(idx){
+  currentTrack=idx;
+  bgAudio.src = musicTracks[idx].url;
+  bgAudio.volume = document.getElementById('volSlider').value/100;
+  bgAudio.play().catch(function(e){
+    // Fallback — tracks may not load from archive, that's OK
+    console.log('Music load note:',e.message);
+  });
+  musicViz.classList.add('active');
+  document.querySelectorAll('.track-btn').forEach(function(b,i){
+    b.classList.toggle('active',i===idx);
+  });
+}
+
+function stopMusic(){
+  bgAudio.pause(); bgAudio.src='';
+  musicViz.classList.remove('active');
+  document.querySelectorAll('.track-btn').forEach(function(b){ b.classList.remove('active'); });
+}
+
+function setVolume(v){
+  bgAudio.volume=v/100;
+  document.getElementById('volVal').textContent=v+'%';
+}
+
+function loadCustomTrack(input){
+  if(!input.files[0]) return;
+  var url = URL.createObjectURL(input.files[0]);
+  bgAudio.src=url; bgAudio.loop=true;
+  bgAudio.volume=document.getElementById('volSlider').value/100;
+  bgAudio.play();
+  musicViz.classList.add('active');
+  document.getElementById('customTrackName').textContent='▶ '+input.files[0].name;
+  document.querySelectorAll('.track-btn').forEach(function(b){ b.classList.remove('active'); });
+}
+
+// --- UI ---
+function showTab(name){
+  document.querySelectorAll('.panel-section').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.p-tab').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('tab-'+name).classList.add('active');
+  var tabs = document.querySelectorAll('.p-tab');
+  var names = ['scripts','music','settings'];
+  tabs[names.indexOf(name)].classList.add('active');
+}
+
+function updateTitle(v){ document.getElementById('title-overlay').textContent=v; }
+
+function toggleFullscreen(){
+  document.getElementById('studio').classList.toggle('fullscreen');
+}
+
+function startCountdown(){
+  var c = document.getElementById('countdown');
+  var nums = ['3','2','1','GO'];
+  var i=0;
+  function tick(){
+    c.style.display='block';
+    c.textContent=nums[i];
+    c.style.animation='none';
+    void c.offsetWidth;
+    c.style.animation='countpop 1s ease-out forwards';
+    i++;
+    if(i<nums.length){ setTimeout(tick,1000); }
+    else {
+      setTimeout(function(){ c.style.display='none'; toggleRecord(); },500);
+    }
+  }
+  tick();
+}
+
+// --- KEYBOARD ---
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT') return;
+  if(e.code==='Space'){ e.preventDefault(); toggleScroll(); }
+  if(e.code==='ArrowRight') loadScript((currentScript+1)%7);
+  if(e.code==='ArrowLeft') loadScript((currentScript-1+7)%7);
+  if(e.code==='ArrowUp'){ scrollSpeed=Math.min(6,+(scrollSpeed+0.2).toFixed(1)); document.getElementById('spdSlider').value=scrollSpeed; setScrollSpeed(scrollSpeed); }
+  if(e.code==='ArrowDown'){ scrollSpeed=Math.max(0.2,+(scrollSpeed-0.2).toFixed(1)); document.getElementById('spdSlider').value=scrollSpeed; setScrollSpeed(scrollSpeed); }
+  if(e.code==='KeyR' && !e.ctrlKey) toggleRecord();
+  if(e.code==='KeyF') toggleFullscreen();
+  if(e.code==='KeyM') { if(bgAudio.paused) playTrack(currentTrack); else stopMusic(); }
+});
+
+// --- INIT ---
+loadScript(0);
+startCamera('user');
+
+</script>
+</body>
+</html>
